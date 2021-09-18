@@ -1,3 +1,6 @@
+#ifndef HEADER_H_
+#define HEADER_H_
+
 #pragma once
 
 // linux
@@ -27,3 +30,5 @@ private:
 	ulong			block_num_;			//数据块的数量
 	uint			stuff_num_;			//最后一个数据块中补0的个数
 };
+
+#endif
