@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef HEADER_H
+#define HEADER_H
 // linux
 #include <sys/stat.h>
 
@@ -9,6 +9,19 @@
 class Header {
 public:
 	Header();
+	std::string getFilePath();
+	std::string getSymbol();
+	size_t getLenFilePath();
+	size_t getLenSymbol();
+	ino_t getIno();
+	mode_t getMode();
+	nlink_t getNumLink();
+	uid_t getUid();
+	gid_t getGid();
+	timespec getAccessTime();
+	timespec getModifyTime();
+	ulong getNumBlock();
+	uint getPadding();
 private:
 	//若用数组保存路径，长度可能溢出
 	//因此将路径保存在Header后面，并在Header中记录长度
@@ -25,5 +38,7 @@ private:
 	timespec		st_atime_;			//最后访问时间
 	timespec		st_mtime_;			//最后修改时间
 	ulong			block_num_;			//数据块的数量
-	uint			stuff_num_;			//最后一个数据块中补0的个数
+	uint			padding_;			//最后一个数据块中补0的个数
 };
+
+#endif
