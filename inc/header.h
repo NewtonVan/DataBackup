@@ -9,7 +9,7 @@
 
 class Header {
 public:
-    Header &GetInstance();
+    static Header &GetInstance();
 
     std::string getFilePath();
     std::string getSymbol();

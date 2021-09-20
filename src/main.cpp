@@ -1,8 +1,13 @@
+#include "utils.h"
+
 #include <iostream>
 
-// 输入：一个或多个文件的路径；一个目标路径
-// 操作：将文件夹统一进行备份；若有打包选项，则切换为打包流程
-// 输出：提示信息？
-int main() {
+using namespace std;
 
+void testGetFileName() {
+    cout << Utils::GetFileNameOnLinux("/mnt/sdcard/media/HAHAWTF.mp3") << endl;
+}
+
+int main() {
+    testGetFileName();
 }
