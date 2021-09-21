@@ -1,9 +1,36 @@
 #include "header.h"
 
-// TODO
-Header::Header()
-    : file_path_len_(0), ln_path_len_(0)
+Header &Header::GetInstance()
 {
+    static Header h;
+    return h;
+}
+
+int Header::Serialize(int backup_fd) const
+{
+    if(backup_fd<0) {
+        return -1;
+    }
+
+    if(
+        write(backup_fd, &file_path_len_, sizeof(file_path_len_)) != sizeof(file_path_len_) || 
+        write(backup_fd, &ln_path_len_, sizeof(ln_path_len_)) != sizeof(ln_path_len_) || 
+        write(backup_fd, &st_ino_, sizeof(st_ino_)) != sizeof(st_ino_) || 
+        write(backup_fd, &st_mode_, sizeof(st_mode_)) != sizeof(st_mode_) || 
+        write(backup_fd, &st_nlink_, sizeof(st_nlink_)) != sizeof(st_nlink_) || 
+        write(backup_fd, &st_uid_, sizeof(st_uid_)) != sizeof(st_uid_) || 
+        write(backup_fd, &st_gid_, sizeof(st_gid_)) != sizeof(st_gid_) || 
+        write(backup_fd, &st_atime_, sizeof(st_atime_)) != sizeof(st_atime_) || 
+        write(backup_fd, &st_mtime_, sizeof(st_mtime_)) != sizeof(st_mtime_) || 
+        write(backup_fd, &block_num_, sizeof(block_num_)) != sizeof(block_num_) || 
+        write(backup_fd, &padding_, sizeof(padding_)) != sizeof(padding_) || 
+        write(backup_fd, file_path_.c_str(), file_path_len_) != file_path_len_ || 
+        write(backup_fd, ln_path_.c_str(), ln_path_len_) != ln_path_len_
+    ) {
+        return -1;
+    }
+
+    return 0;
 }
 
 std::string Header::getFilePath()
@@ -69,4 +96,69 @@ ulong Header::getNumBlock()
 uint Header::getPadding()
 {
     return padding_;
+}
+
+void Header::setFilePath(const std::string &file_path)
+{
+    this->file_path_ = file_path;
+}
+
+void Header::setSymbol(const std::string &ln_path)
+{
+    this->ln_path_ = ln_path;
+}
+
+void Header::setLenFilePath(const size_t file_path_len)
+{
+    this->file_path_len_ = file_path_len;
+}
+
+void Header::setLenSymbol(const size_t ln_path_len)
+{
+    this->ln_path_len_ = ln_path_len;
+}
+
+void Header::setIno(const ino_t st_ino)
+{
+    this->st_ino_ = st_ino;
+}
+
+void Header::setMode(const mode_t st_mode)
+{
+    this->st_mode_ = st_mode;
+}
+
+void Header::setNumLink(const nlink_t st_nlink)
+{
+    this->st_nlink_ = st_nlink;
+}
+
+void Header::setUid(const uid_t st_uid)
+{
+    this->st_uid_ = st_uid;
+}
+
+void Header::setGid(const gid_t st_gid)
+{
+    this->st_gid_ = st_gid;
+}
+
+void Header::setAccessTime(const timespec access_time)
+{
+    this->st_atime_ = access_time;
+}
+
+void Header::setModifyTime(const timespec modify_time)
+{
+    this->st_mtime_ = modify_time;
+}
+
+void Header::setNumBlock(const ulong block_num)
+{
+    this->block_num_ = block_num;
+}
+
+void Header::setPadding(const uint padding)
+{
+    this->padding_ = padding;
 }
