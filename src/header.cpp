@@ -1,6 +1,8 @@
 #include "header.h"
 
+// TODO
 Header::Header()
+    : file_path_len_(0), ln_path_len_(0)
 {
 }
 
