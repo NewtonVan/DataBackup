@@ -3,6 +3,7 @@
 
 // linux
 #include <sys/stat.h>
+#include <unistd.h>
 
 // C++
 #include <string>
@@ -10,6 +11,7 @@
 class Header {
 public:
     static Header &GetInstance();
+    int Serialize(int backup_fd) const;
 
     std::string getFilePath();
     std::string getSymbol();

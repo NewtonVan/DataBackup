@@ -47,3 +47,6 @@
 
 # Unrelated Files
 *.dtmp
+
+# Test Files
+test/

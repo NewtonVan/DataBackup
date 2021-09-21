@@ -8,10 +8,18 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <dirent.h>
+#include <limits.h>
 
 // C++
 #include <vector>
 #include <string>
+#include <unordered_set>
+
+// define
+#define MY_BLOCK_SIZE 512
+#define MAX_BUF_SIZE 512
 
 /**
  * 输入：一个或多个文件的路径；一个目标路径
@@ -31,9 +39,14 @@ private:
     ~Packer() = default;
     Packer(const Packer &p) = delete;
     const Packer &operator=(const Packer &p) = delete;
-private:
-    int Pack(const std::string &abs_parent_path, const std::string &src_file, const int backup_fd);
-    int ParseHeader(const std::string &abs_parent_path, const std::string &src_file, struct stat *st_buf);
+// todo: 方便测试，暂时用作public
+// private:
+public:
+    int Pack(const std::string &abs_parent_path, const std::string &src_file, const int backup_fd, std::unordered_set<nlink_t> &hard_link_set);
+    // 注意本函数并不专门处理软链接
+    void ParseHeader(const std::string &abs_parent_path, const std::string &src_file, const struct stat *st_buf_ptr);
+    int PackDir(const std::string &abs_parent_path, const std::string &src_file, const int backup_fd, const struct stat &st_buf, std::unordered_set<nlink_t> &hard_link_set);
+    int PackRegular(const std::string &abs_parent_path, const std::string &src_file, const int backup_fd, const struct stat &st_buf, std::unordered_set<nlink_t> &hard_link_set);
 };
 
 #endif

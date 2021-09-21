@@ -6,8 +6,12 @@
 
 class ErrorMessager {
 public:
-    static void PrintError(std::ostream &os, const std::string &msg) {
-        os << msg << std::endl;
+    static void PrintError(std::ostream &os, const std::string &msg, int the_errno = 0) {
+        os << msg;
+        if(the_errno!=0) {
+            os << ", errno: " << the_errno;
+        }
+        os << std::endl;
     }
 private:
     ErrorMessager() = default;

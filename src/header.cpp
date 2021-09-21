@@ -6,6 +6,33 @@ Header &Header::GetInstance()
     return h;
 }
 
+int Header::Serialize(int backup_fd) const
+{
+    if(backup_fd<0) {
+        return -1;
+    }
+
+    if(
+        write(backup_fd, &file_path_len_, sizeof(file_path_len_)) != sizeof(file_path_len_) || 
+        write(backup_fd, &ln_path_len_, sizeof(ln_path_len_)) != sizeof(ln_path_len_) || 
+        write(backup_fd, &st_ino_, sizeof(st_ino_)) != sizeof(st_ino_) || 
+        write(backup_fd, &st_mode_, sizeof(st_mode_)) != sizeof(st_mode_) || 
+        write(backup_fd, &st_nlink_, sizeof(st_nlink_)) != sizeof(st_nlink_) || 
+        write(backup_fd, &st_uid_, sizeof(st_uid_)) != sizeof(st_uid_) || 
+        write(backup_fd, &st_gid_, sizeof(st_gid_)) != sizeof(st_gid_) || 
+        write(backup_fd, &st_atime_, sizeof(st_atime_)) != sizeof(st_atime_) || 
+        write(backup_fd, &st_mtime_, sizeof(st_mtime_)) != sizeof(st_mtime_) || 
+        write(backup_fd, &block_num_, sizeof(block_num_)) != sizeof(block_num_) || 
+        write(backup_fd, &padding_, sizeof(padding_)) != sizeof(padding_) || 
+        write(backup_fd, file_path_.c_str(), file_path_len_) != file_path_len_ || 
+        write(backup_fd, ln_path_.c_str(), ln_path_len_) != ln_path_len_
+    ) {
+        return -1;
+    }
+
+    return 0;
+}
+
 std::string Header::getFilePath()
 {
     return file_path_;
