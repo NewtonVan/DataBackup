@@ -1,0 +1,146 @@
+#include "unpack.h"
+#include "copier.h"
+
+using namespace std;
+
+UnPacker& UnPacker::GetInstance()
+{
+    static UnPacker up;
+    return up;
+}
+
+void UnPacker::UnPack(const string src, const string dst)
+{
+    // TODO
+    // extract after init
+    // proper exception handle mechanism
+    try
+    {
+        Init(src, dst);
+        Extract();
+        Clear(src);
+    }
+    catch(const UnPackException &err)
+    {
+        errs_.push_back(err);
+    }
+    
+}
+
+void UnPacker::Extract()
+{
+    Header &header = Header::GetInstance();
+
+    while (0 == header.DeSerialize(fd_backup_)){
+        try
+        {
+            mode_t dst_mode = header.getMode();
+            dst_file_ = abs_parent_path_+header.getFilePath();
+
+            if (S_ISDIR(dst_mode)){
+                UnPackDir();
+            } else if (S_ISREG(dst_mode)){
+                UnPackReg();
+            } else if (S_ISFIFO(dst_mode)){
+                UnPackFIFO();
+            } else if (S_ISLNK(dst_mode)){
+                UnPackSLNK();
+            } else{
+                throw UnPackException(dst_file_, "Undefined file type");
+            }
+        }
+        catch(const UnPackException &err)
+        {
+            errs_.push_back(err);
+        }
+    }
+}
+
+void UnPacker::UnPackDir()
+{
+    if (-1 == mkdir(dst_file_.c_str(), 00775)){
+        throw UnPackException(dst_file_, "Fail to create directory");
+    }
+}
+
+void UnPacker::UnPackReg()
+{
+    Header &header = Header::GetInstance();
+
+    // handle hard link
+    // first met, memo it
+    // otherwise, create a link using `link`, then skip it
+    if (header.getNumLink() > 1){
+        if (hard_lk_map_.count(header.getIno())){
+            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
+        } else{
+            if (link(hard_lk_map_.at(header.getIno()).c_str(), dst_file_.c_str())){
+                throw UnPackException(dst_file_, "Fail to create hard link");
+            }
+            return;
+        }
+    }
+
+    int fd_dst = open(dst_file_.c_str(), O_RDWR | O_CREAT | O_TRUNC, 00700);
+    if (-1 == fd_dst){
+        throw UnPackException(dst_file_, "Fail to create regular file");
+    }
+
+    // TODO
+    // confused about cun's code, query him about variable `remain`
+    header.setPadding(0);
+    if (-1 == close(fd_dst)){
+        throw UnPackException(dst_file_, "Fail to close regular file");
+    }
+
+    Copy(fd_backup_, fd_dst);
+}
+
+void UnPacker::UnPackFIFO()
+{
+    // TODO
+    // figure out the mode
+    if (-1 == mkfifo(dst_file_.c_str(), 00664)){
+        throw UnPackException(dst_file_, "Fail to create FIFO file");
+    }
+}
+
+void UnPacker::UnPackSLNK()
+{
+    Header &header = Header::GetInstance();
+    if (symlink(header.getSymbol().c_str(), dst_file_.c_str())){
+        throw UnPackException(dst_file_, "Fail to create symbolic file");
+    }
+}
+
+void UnPacker::Init(const string &src, const string &dst)
+{
+    hard_lk_map_.clear();
+    errs_.clear();
+    if (0 == access(dst.c_str(), F_OK)){
+        struct stat st_buf;
+        stat(dst.c_str(), &st_buf);
+        if (!S_ISDIR(st_buf.st_mode)){
+            throw UnPackException(dst, "Target path is not a directory");
+        }
+    } else{
+        // TODO
+        // Recursively build the directory
+        // current version is simply judge it as an exception
+        throw UnPackException(dst, "Non-exist target path");
+    }
+
+    abs_parent_path_ = dst;
+
+    fd_backup_ = open(src.c_str(), O_CREAT | O_WRONLY);
+    if (-1 == fd_backup_){
+        throw UnPackException(src, "Fail to open source backup file");
+    }
+}
+
+void UnPacker::Clear(const string &src)
+{
+    if (-1 == close(fd_backup_)){
+        throw UnPackException(src, "Fail to close source backup file");
+    }
+}
