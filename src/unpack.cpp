@@ -127,7 +127,8 @@ void UnPacker::Init(const string &src, const string &dst)
         // TODO
         // Recursively build the directory
         // current version is simply judge it as an exception
-        throw UnPackException(dst, "Non-exist target path");
+        // throw UnPackException(dst, "Non-exist target path");
+        RecurMkdir(dst);
     }
 
     abs_parent_path_ = dst;
@@ -142,5 +143,43 @@ void UnPacker::Clear(const string &src)
 {
     if (-1 == close(fd_backup_)){
         throw UnPackException(src, "Fail to close source backup file");
+    }
+}
+
+void UnPacker::RecurMkdir(const string &dst)
+{
+    size_t local_offset = 0, global_offset = 0;
+    string::iterator iter = dst.begin()+1;
+
+    while (dst.end() != iter){
+        local_offset = (size_t)(find(iter, dst.end(), '/')-iter);
+        if (0 == local_offset){
+            throw UnPackException(dst, "Wrong format destination");
+        }
+        ++local_offset;
+        iter += local_offset;
+        global_offset += local_offset;
+        token = dst.substr(0, global_offset);
+
+        // TODO
+        // only for test
+        cout<<token<<endl;
+
+        if (0 == access(token.c_str(), F_OK)){
+            struct stat st_buf;
+            stat(token.c_str(), &st_buf);
+            if (!S_ISDIR(st_buf.st_mode)){
+                throw UnPackException(dst, "Wrong format destination");
+            }
+        } else{
+            if (-1 == mkdir(token.c_str(), 00775)){
+                throw UnPackException(dst, "Fail to create directory");
+            }
+        }
+
+
+        if (dst.length() <= global_offset){
+            break;
+        }
     }
 }
