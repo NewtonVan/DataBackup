@@ -33,6 +33,47 @@ int Header::Serialize(int backup_fd) const
     return 0;
 }
 
+int Header::DeSerialize(int backup_fd)
+{
+    if (backup_fd < 0){
+        return -1;
+    }
+
+    // TODO
+    // using lseek may have wired result when the file is to big
+    // from man page, it will return (off_t)-1 and errno is set
+    // Actually, I highly recommand the whole project should use FILE* instead of
+    // naive fd which makes the code less robust
+    off_t old_pos = lseek(backup_fd, 0, SEEK_CUR);
+    off_t end_pos = lseek(backup_fd, 0, SEEK_END);
+    if (old_pos == end_pos){
+        return 1;
+    }
+    lseek(backup_fd, old_pos, SEEK_SET);
+
+    // TODO
+    // c_str may have some problem, wait to be checked
+    if (
+        read(backup_fd, &file_path_len_, sizeof(file_path_len_)) != sizeof(file_path_len_) || 
+        read(backup_fd, &ln_path_len_, sizeof(ln_path_len_)) != sizeof(ln_path_len_) || 
+        read(backup_fd, &st_ino_, sizeof(st_ino_)) != sizeof(st_ino_) || 
+        read(backup_fd, &st_mode_, sizeof(st_mode_)) != sizeof(st_mode_) || 
+        read(backup_fd, &st_nlink_, sizeof(st_nlink_)) != sizeof(st_nlink_) || 
+        read(backup_fd, &st_uid_, sizeof(st_uid_)) != sizeof(st_uid_) || 
+        read(backup_fd, &st_gid_, sizeof(st_gid_)) != sizeof(st_gid_) || 
+        read(backup_fd, &st_atime_, sizeof(st_atime_)) != sizeof(st_atime_) || 
+        read(backup_fd, &st_mtime_, sizeof(st_mtime_)) != sizeof(st_mtime_) || 
+        read(backup_fd, &block_num_, sizeof(block_num_)) != sizeof(block_num_) || 
+        read(backup_fd, &padding_, sizeof(padding_)) != sizeof(padding_) || 
+        read(backup_fd, file_path_.c_str(), file_path_len_) != file_path_len_ || 
+        read(backup_fd, ln_path_.c_str(), ln_path_len_) != ln_path_len_
+    ){
+        return -1;
+    }
+
+    return 0;
+}
+
 std::string Header::getFilePath()
 {
     return file_path_;

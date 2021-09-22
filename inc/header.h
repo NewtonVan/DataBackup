@@ -12,6 +12,7 @@ class Header {
 public:
     static Header &GetInstance();
     int Serialize(int backup_fd) const;
+    int DeSerialize(int backup_fd);
 
     std::string getFilePath();
     std::string getSymbol();
