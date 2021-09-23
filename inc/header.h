@@ -8,6 +8,10 @@
 // C++
 #include <string>
 
+// TODO 
+// replace MACRO seems a better solution about const variable
+#define MAX_NM_LTH 256
+
 class Header {
 public:
     static Header &GetInstance();

@@ -1,3 +1,6 @@
+// TODO
+// iostream include for test
+#include <iostream>
 #include "unpack.h"
 #include "copier.h"
 
@@ -149,7 +152,10 @@ void UnPacker::Clear(const string &src)
 void UnPacker::RecurMkdir(const string &dst)
 {
     size_t local_offset = 0, global_offset = 0;
-    string::iterator iter = dst.begin()+1;
+    // wired about string::iterator and string::_cxx11::iterator
+    // string::iterator iter = dst.begin()+1;
+    auto iter = dst.begin()+1;
+    string token;
 
     while (dst.end() != iter){
         local_offset = (size_t)(find(iter, dst.end(), '/')-iter);
