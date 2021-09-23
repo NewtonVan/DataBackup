@@ -8,6 +8,7 @@
 class Utils {
 public:
     static const std::string GetFileNameOnLinux(const std::string &file_path);
+    static unsigned char SetBit(unsigned char uc, int bit_index, int set_bit);
 };
 
 #endif

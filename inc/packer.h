@@ -18,8 +18,8 @@
 #include <unordered_set>
 
 // define
-#define MY_BLOCK_SIZE 512
-#define MAX_BUF_SIZE 512
+// #define MY_BLOCK_SIZE 512
+// #define MAX_BUF_SIZE 512
 
 /**
  * 输入：一个或多个文件的路径；一个目标路径

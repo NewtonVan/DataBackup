@@ -2,6 +2,7 @@
 #include "error_messager.h"
 #include "utils.h"
 #include "header.h"
+#include "definition.h"
 
 using namespace std;
 
