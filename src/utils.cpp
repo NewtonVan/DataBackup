@@ -21,3 +21,8 @@ unsigned char Utils::SetBit(unsigned char uc, int bit_index, int set_bit) {
     }
     
 }
+
+int Utils::GetBit(unsigned char uc, int bit_index) {
+    if(bit_index<0 || bit_index>7) return -1;
+    return (uc & (1 << (7-bit_index))) ? 1 : 0;
+}

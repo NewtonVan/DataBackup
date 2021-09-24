@@ -1,5 +1,6 @@
 #include "compresser.h"
 #include "definition.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -18,25 +19,20 @@ Compresser &Compresser::GetInstance() {
  * 5、逐字符进行写入
  * 6、清理工作
  */
-int Compresser::Compress(const std::string &src_file) {
+void Compresser::Compress(const std::string &src_file) {
     try
     {
         Init(src_file);
         WordFreqCount();
         GenerateCodingTable();
         WriteHeader();
-
-        // 5、逐字符进行写入
-
-        // 6、清理工作
+        WriteData();
         Clear();
     }
     catch(const CompresseException& e)
     {
         errs_.push_back(e);
     }
-
-    return 0;
 }
 
 /**
@@ -66,8 +62,14 @@ void Compresser::Init(const std::string &src_file) {
         throw CompresseException("open failed on " + src_file_);
     }
 
-    // 成员变量init
+    // 打开dst_file
     dst_file_ = src_file_ + ".cmps";
+    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
+    if(-1 == dst_fd_) {
+        throw CompresseException("open failed on " + dst_file_);
+    }
+
+    // 成员变量init
     counts_ = vector<TreeNode *>(256, nullptr);
     coding_table_.clear();
     errs_.clear();
@@ -92,6 +94,7 @@ void Compresser::WordFreqCount() {
     }
     // 若仅一个结点，哈夫曼树不好处理
     // 因此，额外添加一个结点，频度为0
+    // Todo：是空文件又如何处理？
     unsigned int ch = 0;
     int word_count = 0;
     for(TreeNode *t : counts_) {
@@ -110,9 +113,8 @@ void Compresser::WordFreqCount() {
 void Compresser::GenerateCodingTable() {
     TreeNode *root = TreeNode::BuildHuffman(counts_);
     if(nullptr == root) {
-        throw CompresseException("fail to build huffman tree");
+        throw CompresseException("failed to build huffman tree");
     }
-
     stack<TreeNode *> help;
     help.push(root);
     while(!help.empty()) {
@@ -128,14 +130,9 @@ void Compresser::GenerateCodingTable() {
 }
 
 /**
- * Todo: 统计末尾有效位数
- * 压缩文件header从简：词频个数 + 末尾byte有效位数 + 字符及词频
+ * 压缩文件header从简：词频个数 + 末尾byte有效位数
  */
 void Compresser::WriteHeader() {
-    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
-    if(-1 == dst_fd_) {
-        throw CompresseException("open failed on " + dst_file_);
-    }
     unsigned int word_count = 0;
     for(TreeNode *t : counts_) {
         if(nullptr!=t) word_count++;
@@ -145,7 +142,20 @@ void Compresser::WriteHeader() {
     }
 
     // 计算末尾byte有效位数
-    
+    unsigned int last_byte_effective = 0;
+    for(TreeNode *t : counts_) {
+        if(nullptr != t) {
+            last_byte_effective = ( last_byte_effective + 
+                (unsigned int)(t->weight_%8 * coding_table_[t->ch_].size()%8)%8 ) % 8;
+        }
+    }
+    if(
+        sizeof(last_byte_effective) != 
+            write(dst_fd_, &last_byte_effective, sizeof(last_byte_effective))
+    ) {
+        throw CompresseException("write failed on " + dst_file_); 
+    }
+    last_byte_effective_ = last_byte_effective;
 
     for(TreeNode *t : counts_) {
         if(nullptr!=t) {
@@ -159,15 +169,28 @@ void Compresser::WriteHeader() {
     }
 }
 
+/**
+ * 由于“末尾byte”可能补零，因此data结构：“末尾byte” + 正常顺序byte
+ */
 void Compresser::WriteData() {
     // 对src_fd进行lseek
     if(-1 == lseek(src_fd_, 0, SEEK_SET)) {
-        throw CompresseException("fail to lseek src_fd");
+        throw CompresseException("failed to lseek src_fd");
     }
     unsigned char read_buf[MAX_BUF_SIZE];
     unsigned char write_buf[MAX_BUF_SIZE];
-    unsigned char byte_buf;
+    int write_buf_index = 0;
+    unsigned char byte_buf = 0;
     int bit_index = 0;
+    // Todo：是否需要考虑2G以上大文件？
+    // 暂存“写入末尾byte”的位置
+    off_t last_byte_pos;
+    if(
+        -1 == (last_byte_pos = lseek(dst_fd_, 0, SEEK_CUR)) || 
+        -1 == lseek(dst_fd_, sizeof(byte_buf), SEEK_CUR)
+    ) {
+        throw CompresseException("failed to lseek src_fd");
+    };
     while(true) {
         ssize_t read_ret = read(src_fd_, read_buf, MAX_BUF_SIZE);
         if(0 == read_ret) {
@@ -177,64 +200,43 @@ void Compresser::WriteData() {
             throw CompresseException("read failed on " + src_file_);
         }
         for(ssize_t i = 0; i<read_ret; i++) {
-            string code = coding_table_[read_buf[i]];
+            const string &code = coding_table_[read_buf[i]];
+            for(const unsigned char c : code) {
+                int set_bit = 0;
+                if('1'==c) {
+                    set_bit = 1;
+                }
+                byte_buf = Utils::SetBit(byte_buf, bit_index, set_bit);
+                bit_index = (bit_index+1)%8;
+                if(0 == bit_index) {
+                    write_buf[write_buf_index] = byte_buf;
+                    write_buf_index = (write_buf_index+1)%MAX_BUF_SIZE;
+                    if(0 == write_buf_index) {
+                        if(MAX_BUF_SIZE != write(dst_fd_, write_buf, MAX_BUF_SIZE)) {
+                            throw CompresseException("write failed on " + dst_file_);
+                        }
+                    }
+                    byte_buf = 0; // 方便后面处理，无需进行末尾补零
+                }
+            }
+        }
+    }
+    if(write_buf_index != write(dst_fd_, write_buf, write_buf_index)) {
+        throw CompresseException("write failed on " + dst_file_);
+    }
+    if(0!=last_byte_effective_) {
+        if( sizeof(byte_buf) != pwrite(dst_fd_, &byte_buf, sizeof(byte_buf), last_byte_pos)) {
+            throw CompresseException("pwrite failed on " + dst_file_);
         }
     }
 }
 
 void Compresser::Clear() {
     if(-1 == close(src_fd_)) {
-        throw CompresseException("fail to close src_fd");
+        throw CompresseException("failed to close src_fd");
     }
 
-    // if(-1 == close(dst_fd_)) {
-    //     throw CompresseException("fail to close dst_fd");
-    // }
-}
-
-/** 
- * 本哈夫曼树以byte词频为基础
- * 要求counts长度大于1
- */
-TreeNode *TreeNode::BuildHuffman(const vector<TreeNode *> &counts) {
-    // 将基础结点加入小顶堆
-    function<bool(const TreeNode *x, const TreeNode *y)> cmp(TreeNode::Cmp);
-    priority_queue<TreeNode *, vector<TreeNode *>, 
-                   function<bool(const TreeNode *x, const TreeNode *y)>> my_heap(cmp);
-    for(TreeNode *node : counts) {
-        if(nullptr!=node) {
-            my_heap.push(node);
-        }
+    if(-1 == close(dst_fd_)) {
+        throw CompresseException("failed to close dst_fd");
     }
-    // 哈夫曼核心算法：构建树，并且进行叶节点编码
-    if(my_heap.empty() || my_heap.size()==1) {
-        return nullptr;
-    }
-    while(my_heap.size()>1) {
-        TreeNode *left_node = my_heap.top();
-        my_heap.pop();
-        TreeNode *right_node = my_heap.top();
-        my_heap.pop();
-        TreeNode *root = new TreeNode;
-        root->weight_ = left_node->weight_ + right_node->weight_;
-        root->left_ = left_node;
-        root->right_ = right_node;
-        my_heap.push(root);
-    }
-    string code{""};
-    GenerateCoding(my_heap.top(), code);
-    return my_heap.top();
-}
-
-void TreeNode::GenerateCoding(TreeNode *root, string &code) {
-    if(nullptr == root) return;
-    if(nullptr==root->left_ && nullptr==root->right_) {
-        root->code_=code;
-    }
-    code.push_back('0');
-    GenerateCoding(root->left_, code);
-    code.pop_back();
-    code.push_back('1');
-    GenerateCoding(root->right_, code);
-    code.pop_back();
 }
