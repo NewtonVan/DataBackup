@@ -8,4 +8,4 @@ ADD ./sources.list /etc/apt/sources.list
 VOLUME ["/DataBackup"]
 
 RUN apt update && \
-apt install -y build-essential libssl-dev gcc g++ 
+apt install -y build-essential libssl-dev gcc g++ libjsoncpp-dev

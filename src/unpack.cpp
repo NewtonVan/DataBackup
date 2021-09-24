@@ -6,13 +6,13 @@
 
 using namespace std;
 
-UnPacker& UnPacker::GetInstance()
-{
-    static UnPacker up;
-    return up;
-}
+// UnPacker& UnPacker::GetInstance()
+// {
+//     static UnPacker up;
+//     return up;
+// }
 
-void UnPacker::UnPack(const string src, const string dst)
+int UnPacker::Handle(const string &src, const string &dst)
 {
     // TODO
     // extract after init

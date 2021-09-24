@@ -14,6 +14,7 @@
 
 class Header {
 public:
+    Header() = default;
     static Header &GetInstance();
     int Serialize(int backup_fd) const;
     int DeSerialize(int backup_fd);
@@ -47,7 +48,6 @@ public:
     void setPadding(const uint padding);
 private:
     // 单例支持
-    Header() = default;
     ~Header() = default;
     Header(const Header &h) = delete;
     const Header &operator=(const Header &h) = delete;

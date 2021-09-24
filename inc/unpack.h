@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "header.h"
+#include "handler.h"
 
 // TODO
 // It's a better design use interface-implementation structure
@@ -32,14 +33,17 @@ public:
         return file_nm_;
     }
 };
-class UnPacker{
+// TODO
+// Reconstruct the class
+// ChainOfResponsibility is a better choice than Singleton
+class UnPacker : public BaseHandler{
 public:
-    static UnPacker& GetInstance();
-    void UnPack(const std::string src, const std::string dst);
-private:
     UnPacker() = default;
+    // static UnPacker& GetInstance();
+    int Handle(const std::string &src, const std::string &dst) override;
+private:
     ~UnPacker() = default;
-    UnPacker(const UnPacker &up) = delete;
+    // UnPacker(const UnPacker &up) = delete;
     const UnPacker& operator = (const UnPacker &up) = delete;
     void Extract();
     void UnPackDir();
@@ -57,6 +61,7 @@ private:
     int fd_backup_;
     std::map<ino_t, std::string> hard_lk_map_;
     std::vector<UnPackException> errs_;
+    Header header_;
 };
 
 #endif
