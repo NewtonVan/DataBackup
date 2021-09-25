@@ -9,7 +9,7 @@
 
 #define CP_BLOCK_SIZE 512
 
-void Copy(int fd_src, int fd_dst);
+void Copy(int fd_src, int fd_dst, int padding_on);
 
 class CopyException{
 private:

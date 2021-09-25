@@ -1,4 +1,6 @@
 #include "header.h"
+#include <iostream>
+using namespace std;
 
 Header &Header::GetInstance()
 {
@@ -69,19 +71,21 @@ int Header::DeSerialize(int backup_fd)
         read(backup_fd, &block_num_, sizeof(block_num_)) != sizeof(block_num_) || 
         read(backup_fd, &padding_, sizeof(padding_)) != sizeof(padding_)
     ){
+        cout<<"reader"<<endl;
         return -1;
     }
 
     file_path_ = "";
     ln_path_ = "";
-    char buf[MAX_NM_LTH];
+    char buf[MAX_NM_LTH+10];
 
     ulong cycle_bound = file_path_len_ / MAX_NM_LTH;
     ulong remain = file_path_len_ % MAX_NM_LTH;
-    for (ulong i = cycle_bound-1; i >= 0; --i){
+    for (ulong i = 0; i < cycle_bound; ++i){
         if (MAX_NM_LTH != read(backup_fd, buf, MAX_NM_LTH)){
             return -1;
         }
+        buf[MAX_NM_LTH]= '\0';
         file_path_.append(buf);
     }
     if (read(backup_fd, buf, remain) != remain){
@@ -89,13 +93,15 @@ int Header::DeSerialize(int backup_fd)
     }
     buf[remain] = '\0';
     file_path_.append(buf);
+    cout<<file_path_<<endl;
 
     cycle_bound = ln_path_len_ / MAX_NM_LTH;
     remain =ln_path_len_ % MAX_NM_LTH;
-    for (ulong i = cycle_bound-1; i >= 0; --i){
+    for (ulong i = 0; i < cycle_bound; ++i){
         if (MAX_NM_LTH != read(backup_fd, buf, MAX_NM_LTH)){
             return -1;
         }
+        buf[MAX_NM_LTH]= '\0';
         ln_path_.append(buf);
     }
     if (read(backup_fd, buf, remain) != remain){

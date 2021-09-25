@@ -25,20 +25,25 @@ void UnPacker::UnPack(const string src, const string dst)
     }
     catch(const UnPackException &err)
     {
+        // for (auto err : errs_){
+        //     cerr<<err.FileName()<<" "<<err.ErrMsg()<<endl;
+        // }
+        cerr<<err.FileName()<<" "<<err.ErrMsg()<<endl;
         errs_.push_back(err);
     }
-    
+
 }
 
 void UnPacker::Extract()
 {
     Header &header = Header::GetInstance();
-
     while (0 == header.DeSerialize(fd_backup_)){
+
         try
         {
             mode_t dst_mode = header.getMode();
             dst_file_ = abs_parent_path_+header.getFilePath();
+            cout<<dst_file_<<endl;
 
             if (S_ISDIR(dst_mode)){
                 UnPackDir();
@@ -75,28 +80,29 @@ void UnPacker::UnPackReg()
     // otherwise, create a link using `link`, then skip it
     if (header.getNumLink() > 1){
         if (hard_lk_map_.count(header.getIno())){
-            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
-        } else{
             if (link(hard_lk_map_.at(header.getIno()).c_str(), dst_file_.c_str())){
                 throw UnPackException(dst_file_, "Fail to create hard link");
             }
-            return;
+            return;         
+        } else{
+            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
         }
     }
 
-    int fd_dst = open(dst_file_.c_str(), O_RDWR | O_CREAT | O_TRUNC, 00700);
+    int fd_dst = open(dst_file_.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0700);
     if (-1 == fd_dst){
         throw UnPackException(dst_file_, "Fail to create regular file");
     }
 
     // TODO
     // confused about cun's code, query him about variable `remain`
-    header.setPadding(0);
+    // header.setPadding(0);
+    Copy(fd_backup_, fd_dst, 0);
     if (-1 == close(fd_dst)){
         throw UnPackException(dst_file_, "Fail to close regular file");
     }
 
-    Copy(fd_backup_, fd_dst);
+
 }
 
 void UnPacker::UnPackFIFO()
@@ -135,8 +141,12 @@ void UnPacker::Init(const string &src, const string &dst)
     }
 
     abs_parent_path_ = dst;
+    if ('/' != abs_parent_path_.back()){
+        abs_parent_path_.push_back('/');
+    }
 
-    fd_backup_ = open(src.c_str(), O_CREAT | O_WRONLY);
+    // cout << src.c_str() << endl;
+    fd_backup_ = open(src.c_str(), O_RDONLY);
     if (-1 == fd_backup_){
         throw UnPackException(src, "Fail to open source backup file");
     }

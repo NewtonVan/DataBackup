@@ -23,11 +23,11 @@ public:
     {
 
     }
-    std::string ErrMsg()
+    std::string ErrMsg() const 
     {
         return msg_;
     }
-    std::string FileName()
+    std::string FileName() const
     {
         return file_nm_;
     }
