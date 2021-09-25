@@ -6,28 +6,22 @@
 
 
 #include "header.h"
+#include "exception_interface.h"
 
 #define CP_BLOCK_SIZE 512
 
-void Copy(int fd_src, int fd_dst);
+void Copy(int fd_src, int fd_dst, int padding_on);
 
-class CopyException{
-private:
-    std::string file_nm_;
-    std::string msg_;
+class CopyException : public BaseException{
 public:
     CopyException(const std::string &file_nm, const std::string &msg)
-        : file_nm_(file_nm), msg_(msg)
+        : BaseException(file_nm, msg)
     {
 
     }
-    std::string ErrMsg()
+    std::string what()
     {
-        return msg_;
-    }
-    std::string FileName()
-    {
-        return file_nm_;
+        return "Copy Exception : "+BaseException::what();
     }
 };
 

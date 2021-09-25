@@ -1,14 +1,14 @@
-CXX= g++
-CXX_INCLUDE_FLAGS= -Iinc -Iinclude
-LDFLAGS= -Wl,-rpath,lib
-LIBS= -Llib 
-CXXFLAGS= -std=c++11 $(CXX_INCLUDE_FLAGS) 
+CXX = g++
+CXX_INCLUDE_FLAGS = -Iinc -Iinclude
+LDFLAGS = -Wl,-rpath,lib
+LIBS = -Llib 
+CXXFLAGS = -std=c++11 $(CXX_INCLUDE_FLAGS) 
 
-CPP_SRC_FILES= $(shell find . -name "*.cpp")
-CPP_OBJ_FILES= $(patsubst %.cpp, %.o, $(CPP_SRC_FILES))
-CPP_DPT_FILES= $(patsubst %.cpp, %.d, $(CPP_SRC_FILES))
+CPP_SRC_FILES = $(shell find . -name "*.cpp")
+CPP_OBJ_FILES = $(patsubst %.cpp, %.o, $(CPP_SRC_FILES))
+CPP_DPT_FILES = $(patsubst %.cpp, %.d, $(CPP_SRC_FILES))
 
-DST= ./build/dbp
+DST = ./build/dbp
 
 $(DST) : $(CPP_OBJ_FILES)
 	@$(CXX) -o $@ $^ $(CXXFLAGS)  $(LIBS) $(LDFLAGS)

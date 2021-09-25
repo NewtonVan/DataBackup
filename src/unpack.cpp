@@ -15,7 +15,6 @@ using namespace std;
 int UnPacker::Handle(const string &src, const string &dst)
 {
     // TODO
-    // extract after init
     // proper exception handle mechanism
     try
     {
@@ -79,12 +78,12 @@ void UnPacker::UnPackReg()
     // otherwise, create a link using `link`, then skip it
     if (header.getNumLink() > 1){
         if (hard_lk_map_.count(header.getIno())){
-            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
-        } else{
             if (link(hard_lk_map_.at(header.getIno()).c_str(), dst_file_.c_str())){
                 throw UnPackException(dst_file_, "Fail to create hard link");
             }
             return;
+        } else{
+            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
         }
     }
 
@@ -95,12 +94,10 @@ void UnPacker::UnPackReg()
 
     // TODO
     // confused about cun's code, query him about variable `remain`
-    header.setPadding(0);
+    Copy(fd_backup_, fd_dst, 0);
     if (-1 == close(fd_dst)){
         throw UnPackException(dst_file_, "Fail to close regular file");
     }
-
-    Copy(fd_backup_, fd_dst);
 }
 
 void UnPacker::UnPackFIFO()
@@ -131,16 +128,15 @@ void UnPacker::Init(const string &src, const string &dst)
             throw UnPackException(dst, "Target path is not a directory");
         }
     } else{
-        // TODO
-        // Recursively build the directory
-        // current version is simply judge it as an exception
-        // throw UnPackException(dst, "Non-exist target path");
         RecurMkdir(dst);
     }
 
     abs_parent_path_ = dst;
+    if ('/' != abs_parent_path_.back()){
+        abs_parent_path_.push_back('/');
+    }
 
-    fd_backup_ = open(src.c_str(), O_CREAT | O_WRONLY);
+    fd_backup_ = open(src.c_str(), O_RDONLY);
     if (-1 == fd_backup_){
         throw UnPackException(src, "Fail to open source backup file");
     }

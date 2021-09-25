@@ -1,23 +1,28 @@
 #include "copier.h"
 
-void Copy(int fd_src, int fd_dst)
+void Copy(int fd_src, int fd_dst, int padding_on)
 {
-    int buf[CP_BLOCK_SIZE+3];
+    char buf[CP_BLOCK_SIZE+3];
     ssize_t buf_lth;
     Header &h = Header::GetInstance();
     ulong block_num = h.getNumBlock();
 
-    for (ulong i = block_num-1; i >= 0; --i){
+    for (ulong i = 0; i < block_num; ++i){
         buf_lth = read(fd_src, buf, CP_BLOCK_SIZE);
         if (-1 == buf_lth){
             throw CopyException(h.getFilePath(), "Error reading when Copying");
         }
 
-        if (0 == i){
-            memset(buf+buf_lth, 0, h.getPadding());
+        if (block_num-1 == i){
+            if (padding_on){
+                memset(buf+buf_lth, 0, h.getPadding());
+                buf_lth = CP_BLOCK_SIZE;
+            } else{
+                buf_lth -= h.getPadding();
+            }
         }
 
-        if (CP_BLOCK_SIZE != write(fd_dst, buf, CP_BLOCK_SIZE)){
+        if (write(fd_dst, buf, buf_lth) != buf_lth){
             throw CopyException(h.getFilePath(), "Error writing when Copying");
         }
     }

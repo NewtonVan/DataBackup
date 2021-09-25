@@ -9,28 +9,22 @@
 
 #include "header.h"
 #include "handler.h"
+#include "exception_interface.h"
 
 // TODO
 // It's a better design use interface-implementation structure
 // the "source" of all the exception might as well defined in "header.h"
 // packer, unpacker, copier should inherit from it
-class UnPackException{
-private:
-    std::string file_nm_;
-    std::string msg_;
+class UnPackException : public BaseException{
 public:
     UnPackException(const std::string &file_nm, const std::string &msg)
-        : file_nm_(file_nm), msg_(msg)
+        : BaseException(file_nm, msg)
     {
 
     }
-    std::string ErrMsg()
+    std::string what()
     {
-        return msg_;
-    }
-    std::string FileName()
-    {
-        return file_nm_;
+        return "Unpack Exception : "+BaseException::what();
     }
 };
 // TODO
@@ -60,7 +54,7 @@ private:
     std::string dst_file_;
     int fd_backup_;
     std::map<ino_t, std::string> hard_lk_map_;
-    std::vector<UnPackException> errs_;
+    std::vector<Exception> errs_;
     Header header_;
 };
 
