@@ -28,6 +28,10 @@ int UnPacker::Handle(const string &src, const string &dst)
         errs_.push_back(err);
     }
     
+    // TODO
+    // Exception handle
+
+    return 0;
 }
 
 void UnPacker::Extract()
