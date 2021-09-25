@@ -36,7 +36,6 @@ public:
     // static UnPacker& GetInstance();
     int Handle(const std::string &src, const std::string &dst) override;
 private:
-    ~UnPacker() = default;
     // UnPacker(const UnPacker &up) = delete;
     const UnPacker& operator = (const UnPacker &up) = delete;
     void Extract();
@@ -54,7 +53,7 @@ private:
     std::string dst_file_;
     int fd_backup_;
     std::map<ino_t, std::string> hard_lk_map_;
-    std::vector<Exception> errs_;
+    std::vector<BaseException> errs_;
     Header header_;
 };
 

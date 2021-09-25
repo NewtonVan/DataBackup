@@ -16,7 +16,7 @@ int UnPacker::Handle(const string &src, const string &dst)
         Extract();
         Clear(src);
     }
-    catch(const Exception &err)
+    catch(const BaseException &err)
     {
         errs_.push_back(err);
     }
@@ -87,7 +87,7 @@ void UnPacker::UnPackReg()
 
     // TODO
     // confused about cun's code, query him about variable `remain`
-    Copy(fd_backup_, fd_dst, 0);
+    Copy(header_, fd_backup_, fd_dst, 0);
     if (-1 == close(fd_dst)){
         throw UnPackException(dst_file_, "Fail to close regular file");
     }

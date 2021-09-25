@@ -1,10 +1,9 @@
 #include "copier.h"
 
-void Copy(int fd_src, int fd_dst, int padding_on)
+void Copy(Header &h, int fd_src, int fd_dst, int padding_on)
 {
     char buf[CP_BLOCK_SIZE+3];
     ssize_t buf_lth;
-    Header &h = Header::GetInstance();
     ulong block_num = h.getNumBlock();
 
     for (ulong i = 0; i < block_num; ++i){
