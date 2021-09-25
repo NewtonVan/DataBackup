@@ -16,13 +16,16 @@ int UnPacker::Handle(const string &src, const string &dst)
         Extract();
         Clear(src);
     }
-    catch(const UnPackException &err)
+    catch(const Exception &err)
     {
         errs_.push_back(err);
     }
     
     // TODO
     // Exception handle
+    for (Exception &err : errs_){
+        err.what();
+    }
 
     return 0;
 }
