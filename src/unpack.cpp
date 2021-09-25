@@ -6,12 +6,6 @@
 
 using namespace std;
 
-// UnPacker& UnPacker::GetInstance()
-// {
-//     static UnPacker up;
-//     return up;
-// }
-
 int UnPacker::Handle(const string &src, const string &dst)
 {
     // TODO
@@ -35,13 +29,11 @@ int UnPacker::Handle(const string &src, const string &dst)
 
 void UnPacker::Extract()
 {
-    Header &header = Header::GetInstance();
-
-    while (0 == header.DeSerialize(fd_backup_)){
+    while (0 == header_.DeSerialize(fd_backup_)){
         try
         {
-            mode_t dst_mode = header.getMode();
-            dst_file_ = abs_parent_path_+header.getFilePath();
+            mode_t dst_mode = header_.getMode();
+            dst_file_ = abs_parent_path_+header_.getFilePath();
 
             if (S_ISDIR(dst_mode)){
                 UnPackDir();
@@ -71,19 +63,17 @@ void UnPacker::UnPackDir()
 
 void UnPacker::UnPackReg()
 {
-    Header &header = Header::GetInstance();
-
     // handle hard link
     // first met, memo it
     // otherwise, create a link using `link`, then skip it
-    if (header.getNumLink() > 1){
-        if (hard_lk_map_.count(header.getIno())){
-            if (link(hard_lk_map_.at(header.getIno()).c_str(), dst_file_.c_str())){
+    if (header_.getNumLink() > 1){
+        if (hard_lk_map_.count(header_.getIno())){
+            if (link(hard_lk_map_.at(header_.getIno()).c_str(), dst_file_.c_str())){
                 throw UnPackException(dst_file_, "Fail to create hard link");
             }
             return;
         } else{
-            hard_lk_map_.insert(make_pair(header.getIno(), dst_file_));
+            hard_lk_map_.insert(make_pair(header_.getIno(), dst_file_));
         }
     }
 
@@ -111,8 +101,7 @@ void UnPacker::UnPackFIFO()
 
 void UnPacker::UnPackSLNK()
 {
-    Header &header = Header::GetInstance();
-    if (symlink(header.getSymbol().c_str(), dst_file_.c_str())){
+    if (symlink(header_.getSymbol().c_str(), dst_file_.c_str())){
         throw UnPackException(dst_file_, "Fail to create symbolic file");
     }
 }

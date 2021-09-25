@@ -1,11 +1,5 @@
 #include "header.h"
 
-Header &Header::GetInstance()
-{
-    static Header h;
-    return h;
-}
-
 int Header::Serialize(int backup_fd) const
 {
     if(backup_fd<0) {
@@ -54,8 +48,6 @@ int Header::DeSerialize(int backup_fd)
     }
     lseek(backup_fd, old_pos, SEEK_SET);
 
-    // TODO
-    // c_str may have some problem, wait to be checked
     if (
         read(backup_fd, &file_path_len_, sizeof(file_path_len_)) != sizeof(file_path_len_) || 
         read(backup_fd, &ln_path_len_, sizeof(ln_path_len_)) != sizeof(ln_path_len_) || 
@@ -74,14 +66,15 @@ int Header::DeSerialize(int backup_fd)
 
     file_path_ = "";
     ln_path_ = "";
-    char buf[MAX_NM_LTH];
+    char buf[MAX_NM_LTH+10];
 
     ulong cycle_bound = file_path_len_ / MAX_NM_LTH;
     ulong remain = file_path_len_ % MAX_NM_LTH;
-    for (ulong i = cycle_bound-1; i >= 0; --i){
+    for (ulong i = 0; i < cycle_bound; ++i){
         if (MAX_NM_LTH != read(backup_fd, buf, MAX_NM_LTH)){
             return -1;
         }
+        buf[MAX_NM_LTH] = '\0';
         file_path_.append(buf);
     }
     if (read(backup_fd, buf, remain) != remain){
@@ -92,10 +85,11 @@ int Header::DeSerialize(int backup_fd)
 
     cycle_bound = ln_path_len_ / MAX_NM_LTH;
     remain =ln_path_len_ % MAX_NM_LTH;
-    for (ulong i = cycle_bound-1; i >= 0; --i){
+    for (ulong i = 0; i < cycle_bound; ++i){
         if (MAX_NM_LTH != read(backup_fd, buf, MAX_NM_LTH)){
             return -1;
         }
+        buf[MAX_NM_LTH] = '\0';
         ln_path_.append(buf);
     }
     if (read(backup_fd, buf, remain) != remain){
