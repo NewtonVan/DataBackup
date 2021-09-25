@@ -8,10 +8,15 @@
 // C++
 #include <string>
 
+// TODO 
+// replace MACRO seems a better solution about const variable
+#define MAX_NM_LTH 256
+
 class Header {
 public:
-    static Header &GetInstance();
+    Header() = default;
     int Serialize(int backup_fd) const;
+    int DeSerialize(int backup_fd);
 
     std::string getFilePath();
     std::string getSymbol();
@@ -40,12 +45,6 @@ public:
     void setModifyTime(const timespec modify_time);
     void setNumBlock(const ulong block_num);
     void setPadding(const uint padding);
-private:
-    // 单例支持
-    Header() = default;
-    ~Header() = default;
-    Header(const Header &h) = delete;
-    const Header &operator=(const Header &h) = delete;
 private:
     //若用数组保存路径，长度可能溢出
     //因此将路径保存在Header后面，并在Header中记录长度

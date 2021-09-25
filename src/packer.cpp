@@ -18,9 +18,6 @@ int Packer::Pack(const std::vector<std::string> &src_files, const std::string &o
         ErrorMessager::PrintError(cout, "源路径为空");
         return -1;
     }
-    for(const string &s : src_files) {
-        
-    }
     // 目标路径
     // 先判断路径是否存在，不存在则进行创建，存在则进行文件、目录判断
     // 暂不考虑out_dir为链接的情况
