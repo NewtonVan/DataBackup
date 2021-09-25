@@ -9,6 +9,8 @@
 
 #include "huffman_tree.h"
 
+#define MAX_BUF_SIZE 4096
+
 class DecompresseException {
 public:
     DecompresseException(const std::string &msg) : msg_(msg) {}

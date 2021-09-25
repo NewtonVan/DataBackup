@@ -1,5 +1,4 @@
 #include "compresser.h"
-#include "definition.h"
 #include "utils.h"
 
 using namespace std;

@@ -15,6 +15,8 @@
 
 #include "huffman_tree.h"
 
+#define MAX_BUF_SIZE 4096
+
 class CompresseException {
 public:
     CompresseException(const std::string &msg) : msg_(msg) {}

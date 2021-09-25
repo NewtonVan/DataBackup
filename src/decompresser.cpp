@@ -1,5 +1,4 @@
 #include "decompresser.h"
-#include "definition.h"
 #include "utils.h"
 
 using namespace std;
