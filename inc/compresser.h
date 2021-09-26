@@ -14,24 +14,23 @@
 #include <unordered_map>
 
 #include "huffman_tree.h"
+#include "exception_interface.h"
 
 #define MAX_BUF_SIZE 4096
 
-class CompresseException {
+class CompresseException : public BaseException {
 public:
-    CompresseException(const std::string &msg) : msg_(msg) {}
-    std::string ErrMsg() const {
-        return msg_;
+    CompresseException(const std::string &file_nm, const std::string &msg)
+        : BaseException(file_nm, msg) {}
+    std::string what() {
+        return "Compresse Exception : "+BaseException::what();
     }
-private:
-    std::string msg_;
 };
 
 
 class  Compresser {
 public:
-    static Compresser &GetInstance();
-    void Compress(const std::string &src_file);
+    int Handle(const std::string &src, const std::string &dst);
 private:
     Compresser() = default;
     ~Compresser() = default;

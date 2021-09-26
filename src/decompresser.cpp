@@ -3,12 +3,7 @@
 
 using namespace std;
 
-Decompresser &Decompresser::GetInstance() {
-    static Decompresser dc;
-    return dc;
-}
-
-void Decompresser::Decompress(const std::string &src_file) {
+int Decompresser::Handle(const std::string &src_file, const std::string &dst) {
     try
     {
         Init(src_file);
@@ -25,25 +20,25 @@ void Decompresser::Decompress(const std::string &src_file) {
 void Decompresser::Init(const std::string &src_file) {
     // 检查src_file
     if(src_file.empty()) {
-        throw DecompresseException("bad path");
+        throw DecompresseException("", "bad path");
     }
     struct stat st_buf;
     if(-1 == lstat(src_file.c_str(), &st_buf)) {
         if(errno == ENOENT) { // no entry
-            throw DecompresseException("no such file or directory: " + src_file);
+            throw DecompresseException("", "no such file or directory: " + src_file);
         } else {
-            throw DecompresseException("lstat failed on " + src_file);
+            throw DecompresseException("", "lstat failed on " + src_file);
         }
     }
     if(!S_ISREG(st_buf.st_mode)) {
-        throw DecompresseException("not a regular file: " + src_file);
+        throw DecompresseException("", "not a regular file: " + src_file);
     }
     src_file_ = src_file;
 
     // 打开src_file
     src_fd_ = open(src_file_.c_str(), O_RDONLY);
     if(-1 == src_fd_) {
-        throw DecompresseException("open failed on " + src_file_);
+        throw DecompresseException("", "open failed on " + src_file_);
     }
 
     // 打开dst_file
@@ -51,7 +46,7 @@ void Decompresser::Init(const std::string &src_file) {
     dst_file_ = src_file_ + ".dcmps";
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
     if(-1 == dst_fd_) {
-        throw DecompresseException("open failed on " + dst_file_);
+        throw DecompresseException("", "open failed on " + dst_file_);
     }
 
     // 成员变量init    
@@ -67,7 +62,7 @@ void Decompresser::ReadHeader() {
         sizeof(last_byte_effective_) != 
             read(src_fd_, &last_byte_effective_, sizeof(last_byte_effective_))
     ) {
-        throw DecompresseException("read failed on " + src_file_);
+        throw DecompresseException("", "read failed on " + src_file_);
     }
     unsigned char char_buf;
     uint64_t weight_buf;
@@ -76,7 +71,7 @@ void Decompresser::ReadHeader() {
             sizeof(char_buf) != read(src_fd_, &char_buf, sizeof(char_buf)) || 
             sizeof(weight_buf) != read(src_fd_, &weight_buf, sizeof(weight_buf))
         ) {
-            throw DecompresseException("read failed on " + src_file_);
+            throw DecompresseException("", "read failed on " + src_file_);
         }
         counts_[char_buf] = new TreeNode(char_buf);
         counts_[char_buf]->weight_ = weight_buf;
@@ -91,12 +86,12 @@ void Decompresser::ReadData() {
     // 构建哈夫曼树
     huff_root_ = TreeNode::BuildHuffman(counts_);
     if(nullptr == huff_root_) {
-        throw DecompresseException("failed to build huffman tree");
+        throw DecompresseException("", "failed to build huffman tree");
     }
     // 先读取“末尾byte”
     unsigned char last_byte;
     if(-1 == read(src_fd_, &last_byte, sizeof(last_byte))) {
-        throw DecompresseException("read failed on " + src_file_);
+        throw DecompresseException("", "read failed on " + src_file_);
     }
     // 读取data，每读到一位则在树上移动一位
     unsigned char read_buf[MAX_BUF_SIZE];
@@ -110,7 +105,7 @@ void Decompresser::ReadData() {
             break;
         }
         if(-1 == read_ret) {
-            throw DecompresseException("read failed on " + src_file_);
+            throw DecompresseException("", "read failed on " + src_file_);
         }
         for(ssize_t i=0; i<read_ret; i++) {
             unsigned char byte_buf = read_buf[i];
@@ -126,7 +121,7 @@ void Decompresser::ReadData() {
                     write_buf_index = (write_buf_index+1)%MAX_BUF_SIZE;
                     if(0 == write_buf_index) {
                         if(MAX_BUF_SIZE != write(dst_fd_, write_buf, MAX_BUF_SIZE)) {
-                            throw DecompresseException("write failed on " + dst_file_);
+                            throw DecompresseException("", "write failed on " + dst_file_);
                         }
                     }
                     // 重置node为根
@@ -148,7 +143,7 @@ void Decompresser::ReadData() {
             write_buf_index = (write_buf_index+1)%MAX_BUF_SIZE;
             if(0 == write_buf_index) {
                 if(MAX_BUF_SIZE != write(dst_fd_, write_buf, MAX_BUF_SIZE)) {
-                    throw DecompresseException("write failed on " + dst_file_);
+                    throw DecompresseException("", "write failed on " + dst_file_);
                 }
             }
             // 重置node为根
@@ -156,16 +151,16 @@ void Decompresser::ReadData() {
         }
     }
     if(write_buf_index != write(dst_fd_, write_buf, write_buf_index)) {
-        throw DecompresseException("write failed on " + dst_file_);
+        throw DecompresseException("", "write failed on " + dst_file_);
     }
 }
 
 void Decompresser::Clear() {
     if(-1 == close(src_fd_)) {
-        throw DecompresseException("failed to close src_fd");
+        throw DecompresseException("", "failed to close src_fd");
     }
 
     if(-1 == close(dst_fd_)) {
-        throw DecompresseException("failed to close dst_fd");
+        throw DecompresseException("", "failed to close dst_fd");
     }
 }
