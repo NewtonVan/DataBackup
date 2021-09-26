@@ -5,7 +5,7 @@
 
 class Exception{
 public:
-    virtual std::string what() = 0;
+    virtual std::string what() const = 0;
 };
 
 class BaseException : public Exception{
@@ -18,7 +18,7 @@ public:
     {
 
     }
-    std::string what()
+    std::string what() const
     {
         return file_nm_ + " : " +msg_;
     }
