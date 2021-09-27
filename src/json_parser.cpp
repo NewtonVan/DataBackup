@@ -23,6 +23,11 @@ string& JsonParser::getJsonString()
     return json_str_;
 }
 
+string& JsonParser::getPath()
+{
+    return path_;
+}
+
 void JsonParser::Decode(const std::string &input)
 {
     try
@@ -36,6 +41,9 @@ void JsonParser::Decode(const std::string &input)
         }
         if (root_.isMember("target")){
             dst_ = root_["target"].asString();
+        }
+        if (root_.isMember("path")){
+            path_ = root_["path"].asString();
         }
     }
     catch(Json::Exception &e)

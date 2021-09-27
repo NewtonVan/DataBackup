@@ -31,6 +31,7 @@ public:
     string& getSrc();
     string& getDst();
     string& getJsonString();
+    string& getPath();
     void Decode(const std::string &input);
     void Encode(int err_code, vector<string> &file_nm);
 private:
@@ -41,6 +42,7 @@ private:
     string src_;
     string dst_;
     string json_str_;
+    string path_;
     uint64_t seq_;
 };
 
