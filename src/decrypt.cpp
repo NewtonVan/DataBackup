@@ -3,7 +3,7 @@
 int Decryptor::Handle(const std::string &src, const std::string &dst) {
     try
     {
-        Init(src);
+        Init(src, dst);
         CheckDigest();
         Decrypt();
         Clear();
@@ -22,24 +22,19 @@ int Decryptor::Handle(const std::string &src, const std::string &dst) {
     return 0;
 }
 
-void Decryptor::Init(const std::string &src_file) {
+void Decryptor::Init(const std::string &src, const std::string &dst) {
     // 检查src_file
-    if(src_file.empty()) {
+    if(src.empty()) {
         throw DecryptException("", "bad path");
     }
     struct stat st_buf;
-    if(-1 == lstat(src_file.c_str(), &st_buf)) {
-        if(errno == ENOENT) { // no entry
-            throw DecryptException("", "no such file or directory: " + src_file);
-        } else {
-            throw DecryptException("", "lstat failed on " + src_file);
-        }
+    if(-1 == lstat(src.c_str(), &st_buf)) {
+        throw DecryptException("", "lstat failed on " + src);
     }
     if(!S_ISREG(st_buf.st_mode)) {
-        throw DecryptException("", "not a regular file: " + src_file);
+        throw DecryptException("", "not a regular file: " + src);
     }
-    src_file_ = src_file;
-
+    src_file_ = src;
     // 打开src_file
     src_fd_ = open(src_file_.c_str(), O_RDONLY);
     if(-1 == src_fd_) {
@@ -47,7 +42,7 @@ void Decryptor::Init(const std::string &src_file) {
     }
 
     // 打开dst_file
-    dst_file_ = src_file_ + ".dnc";
+    dst_file_ = dst;
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
     if(-1 == dst_fd_) {
         throw DecryptException("", "open failed on dst file");

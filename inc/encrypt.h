@@ -31,14 +31,14 @@ public:
  */
 class Encryptor {
 public:
-    int Handle(const std::string &src, const std::string &dst="");
+    int Handle(const std::string &src, const std::string &dst);
     void SetPassword(const std::string &pwd) {
         pwd_ = pwd;
     }
 // Todo: for test
 // private:
 public:
-    void Init(const std::string &src_file);
+    void Init(const std::string &src, const std::string &dst);
     void GenerateDigest();
     void Encrypt();
     void Clear();
