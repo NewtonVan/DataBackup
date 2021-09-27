@@ -50,7 +50,7 @@ void Encryptor::Init(const std::string &src, const std::string &dst) {
 
     // 打开dst_file
     dst_file_ = dst;
-    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
+    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw EncryptException("", "failed to open dst file");
     }

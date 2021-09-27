@@ -52,17 +52,22 @@ void JsonParser::Decode(const std::string &input)
     
 }
 
-void JsonParser::Encode(int err_code, vector<string> &file_nm)
+void JsonParser::Encode(int err_code, vector<DirEntry> &entries)
 {
     try
     {
         root_.clear();
         root_["ack"] = Json::UInt64(seq_);
         root_["errcode"] = Json::Value(err_code);
-        if (file_nm.size()){
-            root_["filename"] = Json::arrayValue;
-            for (auto str : file_nm){
-                root_["filename"].append(str);
+        if (entries.size()){
+            root_["trees"] = Json::arrayValue;
+            item_ = Json::objectValue;
+            for (auto e : entries){
+                item_["filename"] = Json::Value(e.m_filename);
+                item_["filetype"] = Json::Value(e.m_filetype);
+                item_["inode"] = Json::UInt64(e.m_inode);
+                item_["size"] = Json::UInt64(e.m_size);
+                root_["trees"].append(item_);
             }
         }
 

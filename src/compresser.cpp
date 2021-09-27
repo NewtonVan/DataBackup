@@ -58,7 +58,7 @@ void Compresser::Init(const std::string &src_file, const std::string &dst) {
 
     // 打开dst_file
     dst_file_ = dst;
-    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
+    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw CompresseException("", "open failed on " + dst_file_);
     }
