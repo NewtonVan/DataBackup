@@ -19,8 +19,9 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
             throw PackException("", "bad src path");
         }
         if(0==access(dst.c_str(), F_OK)) {
-            stat(dst.c_str(), &st_buf_);
-            if(!S_ISDIR(st_buf_.st_mode)) {
+            struct stat st_buf;
+            stat(dst.c_str(), &st_buf);
+            if(!S_ISDIR(st_buf.st_mode)) {
                 throw PackException("", "dst path not a directory");
             }
         } else {
@@ -48,6 +49,9 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
             abs_parent_path_ = string(s.begin(), s.begin()+s.find_last_of('/')+1);
             Pack(s);
         }
+
+        // extra: sha256 hash
+        
 
         // 3、清理工作
         src_files_.clear();
@@ -79,20 +83,21 @@ void Packer::SetSrcFiles(const std::vector<std::string> &src_files) {
 
 void Packer::Pack(const std::string &src_file) {
     // 检查src file有效性，小心解引用
-    if(-1 == lstat(src_file.c_str(), &st_buf_)) {
+    struct stat st_buf;
+    if(-1 == lstat(src_file.c_str(), &st_buf)) {
         throw PackException("", "lstat failed on "+src_file);
     }
-    ParseHeader(src_file);
-    if(S_ISDIR(st_buf_.st_mode)) {
-        PackDir(src_file);
-    } else if(S_ISREG(st_buf_.st_mode)) {
-        PackRegular(src_file);
-    } else if(S_ISFIFO(st_buf_.st_mode)) {
+    ParseHeader(src_file, st_buf);
+    if(S_ISDIR(st_buf.st_mode)) {
+        PackDir(src_file, st_buf);
+    } else if(S_ISREG(st_buf.st_mode)) {
+        PackRegular(src_file, st_buf);
+    } else if(S_ISFIFO(st_buf.st_mode)) {
         if(-1==header_.Serialize(dst_fd_)) {
             throw PackException("", "write header failed: " + src_file);
         }
-    } else if(S_ISLNK(st_buf_.st_mode)) { // 符号链接
-        PackLink(src_file);
+    } else if(S_ISLNK(st_buf.st_mode)) { // 符号链接
+        PackLink(src_file, st_buf);
     } else {
         // 其他类型文件，不需处理
     }
@@ -101,25 +106,25 @@ void Packer::Pack(const std::string &src_file) {
 /**
  * 软链接等特殊字段需要额外处理
  */
-void Packer::ParseHeader(const std::string &src_file) {
+void Packer::ParseHeader(const std::string &src_file, const struct stat &st_buf) {
     string file_path(src_file.begin() + abs_parent_path_.size(), src_file.end());
     header_.setFilePath(file_path);
     header_.setSymbol("");
     header_.setLenFilePath(file_path.size());
     header_.setLenSymbol(0);
-    header_.setIno(st_buf_.st_ino);
-    header_.setMode(st_buf_.st_mode);
-    header_.setNumLink(st_buf_.st_nlink);
-    header_.setUid(st_buf_.st_uid);
-    header_.setGid(st_buf_.st_gid);
-    header_.setAccessTime(st_buf_.st_atim);
-    header_.setModifyTime(st_buf_.st_mtim);
+    header_.setIno(st_buf.st_ino);
+    header_.setMode(st_buf.st_mode);
+    header_.setNumLink(st_buf.st_nlink);
+    header_.setUid(st_buf.st_uid);
+    header_.setGid(st_buf.st_gid);
+    header_.setAccessTime(st_buf.st_atim);
+    header_.setModifyTime(st_buf.st_mtim);
 
     ulong block_num = 0;
     uint padding = 0;
-    if(S_ISREG(st_buf_.st_mode)) {
-        block_num = st_buf_.st_size / MY_BLOCK_SIZE;
-        uint temp = st_buf_.st_size % MY_BLOCK_SIZE;
+    if(S_ISREG(st_buf.st_mode)) {
+        block_num = st_buf.st_size / MY_BLOCK_SIZE;
+        uint temp = st_buf.st_size % MY_BLOCK_SIZE;
         if(temp!=0) {
             block_num++;
             padding = MY_BLOCK_SIZE - temp;
@@ -129,7 +134,7 @@ void Packer::ParseHeader(const std::string &src_file) {
     header_.setPadding(padding);
 }
 
-void Packer::PackDir(const std::string &src_file) {
+void Packer::PackDir(const std::string &src_file, const struct stat &st_buf) {
     // header序列化
     if(-1 == header_.Serialize(dst_fd_)) {
         throw PackException("", "write header failed: " + src_file);
@@ -163,19 +168,19 @@ void Packer::PackDir(const std::string &src_file) {
         throw PackException("", "closedir failed on " + src_file);
     }
     // 还原访问时间
-    RestoreAccessTime(src_file);
+    RestoreAccessTime(src_file, st_buf);
 }
 
 /**
  * 硬链接处理：判断stat结构体的st_nlink，大于1，则检查map，
  * 若不存在，加入set，写入backup；否则只写入头部信息
  */
-void Packer::PackRegular(const std::string &src_file) {
+void Packer::PackRegular(const std::string &src_file, const struct stat &st_buf) {
     // 硬链接处理
     bool is_hard_link = false;
-    if(st_buf_.st_nlink>1) {
-        if(hard_link_set_.count(st_buf_.st_nlink)==0) {
-            hard_link_set_.insert(st_buf_.st_nlink);
+    if(st_buf.st_nlink>1) {
+        if(hard_link_set_.count(st_buf.st_nlink)==0) {
+            hard_link_set_.insert(st_buf.st_nlink);
         } else {
             is_hard_link = true;
         }
@@ -210,11 +215,11 @@ void Packer::PackRegular(const std::string &src_file) {
             throw PackException("", "close failed on " + src_file);
         }
         // 还原访问时间
-        RestoreAccessTime(src_file);
+        RestoreAccessTime(src_file, st_buf);
     }
 }
 
-void Packer::PackLink(const std::string &src_file) {
+void Packer::PackLink(const std::string &src_file, const struct stat &st_buf) {
     // 设置符号链接
     char buf[PATH_MAX+1];
     ssize_t read_num = readlink(src_file.c_str(), buf, PATH_MAX);
@@ -230,9 +235,9 @@ void Packer::PackLink(const std::string &src_file) {
     }
 }
 
-void Packer::RestoreAccessTime(const std::string &src_file) {
+void Packer::RestoreAccessTime(const std::string &src_file, const struct stat &st_buf) {
     timespec tm[2];
-    tm[0] = st_buf_.st_atim;
+    tm[0] = st_buf.st_atim;
     tm[1].tv_nsec = UTIME_OMIT;
     if(utimensat(AT_FDCWD, src_file.c_str(), tm, AT_SYMLINK_NOFOLLOW)==-1) {
         throw PackException("", "utimenstat failed on " + src_file);
