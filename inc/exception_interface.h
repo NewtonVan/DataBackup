@@ -2,6 +2,9 @@
 #define EXCEPTION_INTERFACE_H
 
 #include <string>
+#include <memory>
+
+using std::shared_ptr;
 
 class Exception{
 public:

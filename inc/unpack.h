@@ -53,7 +53,7 @@ private:
     std::string dst_file_;
     int fd_backup_;
     std::map<ino_t, std::string> hard_lk_map_;
-    std::vector<BaseException> errs_;
+    std::vector<shared_ptr<BaseException> > errs_;
     Header header_;
 };
 
