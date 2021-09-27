@@ -23,6 +23,7 @@ public:
         server &s = MServer::GetInstance().GetEP();
         s.send(hdl, backend->js_parser_.getJsonString(), msg->get_opcode());
     }
+    void
 private:
     JsonParser js_parser_;
 };
