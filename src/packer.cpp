@@ -1,8 +1,6 @@
 #include "packer.h"
 #include "header.h"
 
-#include <iostream>
-
 using namespace std;
 
 /**
@@ -57,7 +55,6 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     // Exception handle
     for (Exception &err : errs_){
         err.what();
-        // cout << err.what() << endl;
     }
 
     return 0;
