@@ -25,14 +25,9 @@ public:
 class Decompresser
 {
 public:
-    int Handle(const std::string &src_file, const std::string &dst);
+    int Handle(const std::string &src, const std::string &dst);
 private:
-    Decompresser() = default;
-    ~Decompresser() = default;
-    Decompresser(const Decompresser &dc) = delete;
-    const Decompresser &operator=(const Decompresser &dc) = delete;
-private:
-    void Init(const std::string &src_file);
+    void Init(const std::string &src, const std::string &dst);
     void ReadHeader();
     void ReadData();
     void Clear();

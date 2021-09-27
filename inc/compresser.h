@@ -31,15 +31,10 @@ public:
 class  Compresser {
 public:
     int Handle(const std::string &src, const std::string &dst);
-private:
-    Compresser() = default;
-    ~Compresser() = default;
-    Compresser(const Compresser &c) = delete;
-    const Compresser &operator=(const Compresser &c) = delete;
 // Todo: for test
 // private:
 public:
-    void Init(const std::string &src_file);
+    void Init(const std::string &src, const std::string &dst);
     void WordFreqCount();
     void GenerateCodingTable();
     void WriteHeader();

@@ -3,10 +3,10 @@
 
 using namespace std;
 
-int Decompresser::Handle(const std::string &src_file, const std::string &dst) {
+int Decompresser::Handle(const std::string &src, const std::string &dst) {
     try
     {
-        Init(src_file);
+        Init(src, dst);
         ReadHeader();
         ReadData();
         Clear();
@@ -15,25 +15,27 @@ int Decompresser::Handle(const std::string &src_file, const std::string &dst) {
     {
         errs_.push_back(e);
     }
+
+    return 0;
 }
 
-void Decompresser::Init(const std::string &src_file) {
+void Decompresser::Init(const std::string &src, const std::string &dst) {
     // 检查src_file
-    if(src_file.empty()) {
+    if(src.empty()) {
         throw DecompresseException("", "bad path");
     }
     struct stat st_buf;
-    if(-1 == lstat(src_file.c_str(), &st_buf)) {
+    if(-1 == lstat(src.c_str(), &st_buf)) {
         if(errno == ENOENT) { // no entry
-            throw DecompresseException("", "no such file or directory: " + src_file);
+            throw DecompresseException("", "no such file or directory: " + src);
         } else {
-            throw DecompresseException("", "lstat failed on " + src_file);
+            throw DecompresseException("", "lstat failed on " + src);
         }
     }
     if(!S_ISREG(st_buf.st_mode)) {
-        throw DecompresseException("", "not a regular file: " + src_file);
+        throw DecompresseException("", "not a regular file: " + src);
     }
-    src_file_ = src_file;
+    src_file_ = src;
 
     // 打开src_file
     src_fd_ = open(src_file_.c_str(), O_RDONLY);
@@ -43,7 +45,7 @@ void Decompresser::Init(const std::string &src_file) {
 
     // 打开dst_file
     // Todo：解压文件名称
-    dst_file_ = src_file_ + ".dcmps";
+    dst_file_ = dst;
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
     if(-1 == dst_fd_) {
         throw DecompresseException("", "open failed on " + dst_file_);

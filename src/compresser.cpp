@@ -4,8 +4,6 @@
 using namespace std;
 
 /** 
- * 压缩文件命名：xxx.cprs
- * 
  * 1、srcfile检查
  * 2、词频统计，得到词频数组（数组存储哈夫曼树指针）
  * 3、构建哈夫曼树，得到字符编码表（ 字符-编码）
@@ -13,10 +11,10 @@ using namespace std;
  * 5、逐字符进行写入
  * 6、清理工作
  */
-int Compresser::Handle(const std::string &src_file, const std::string &dst) {
+int Compresser::Handle(const std::string &src, const std::string &dst) {
     try
     {
-        Init(src_file);
+        Init(src, dst);
         WordFreqCount();
         GenerateCodingTable();
         WriteHeader();
@@ -27,12 +25,14 @@ int Compresser::Handle(const std::string &src_file, const std::string &dst) {
     {
         errs_.push_back(e);
     }
+
+    return 0;
 }
 
 /**
  * 压缩文件名称：例如src名为a.backup，则dst命名为a.backup.cmps
  */
-void Compresser::Init(const std::string &src_file) {
+void Compresser::Init(const std::string &src_file, const std::string &dst) {
     // 检查src_file
     if(src_file.empty()) {
         throw CompresseException("", "bad path");
@@ -57,7 +57,7 @@ void Compresser::Init(const std::string &src_file) {
     }
 
     // 打开dst_file
-    dst_file_ = src_file_ + ".cmps";
+    dst_file_ = dst;
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
     if(-1 == dst_fd_) {
         throw CompresseException("", "open failed on " + dst_file_);
