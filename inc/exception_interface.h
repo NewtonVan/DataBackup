@@ -2,6 +2,12 @@
 #define EXCEPTION_INTERFACE_H
 
 #include <string>
+<<<<<<< HEAD
+=======
+#include <memory>
+
+using std::shared_ptr;
+>>>>>>> master
 
 class Exception{
 public:

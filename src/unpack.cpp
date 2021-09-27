@@ -15,18 +15,21 @@ int UnPacker::Handle(const string &src, const string &dst)
         Extract();
         Clear(src);
     }
-    catch(const BaseException &err)
+    catch(BaseException *err)
     {
-        errs_.push_back(err);
+        errs_.push_back(shared_ptr<BaseException>(err));
     }
     
     // TODO
     // Exception handle
-    for (Exception &err : errs_){
-        err.what();
+    for (auto &err : errs_){
+        err->what();
     }
-
-    return 0;
+    if (errs_.empty()){
+        return 0;
+    } else{
+        return -1;
+    }
 }
 
 void UnPacker::Extract()
@@ -46,12 +49,12 @@ void UnPacker::Extract()
             } else if (S_ISLNK(dst_mode)){
                 UnPackSLNK();
             } else{
-                throw UnPackException(dst_file_, "Undefined file type");
+                throw new UnPackException(dst_file_, "Undefined file type");
             }
         }
-        catch(const UnPackException &err)
+        catch(BaseException *err)
         {
-            errs_.push_back(err);
+            errs_.push_back(shared_ptr<BaseException>(err));
         }
     }
 }
@@ -59,7 +62,7 @@ void UnPacker::Extract()
 void UnPacker::UnPackDir()
 {
     if (-1 == mkdir(dst_file_.c_str(), 00775)){
-        throw UnPackException(dst_file_, "Fail to create directory");
+        throw new UnPackException(dst_file_, "Fail to create directory");
     }
 }
 
@@ -71,7 +74,7 @@ void UnPacker::UnPackReg()
     if (header_.getNumLink() > 1){
         if (hard_lk_map_.count(header_.getIno())){
             if (link(hard_lk_map_.at(header_.getIno()).c_str(), dst_file_.c_str())){
-                throw UnPackException(dst_file_, "Fail to create hard link");
+                throw new UnPackException(dst_file_, "Fail to create hard link");
             }
             return;
         } else{
@@ -81,14 +84,14 @@ void UnPacker::UnPackReg()
 
     int fd_dst = open(dst_file_.c_str(), O_RDWR | O_CREAT | O_TRUNC, 00700);
     if (-1 == fd_dst){
-        throw UnPackException(dst_file_, "Fail to create regular file");
+        throw new UnPackException(dst_file_, "Fail to create regular file");
     }
 
     // TODO
     // confused about cun's code, query him about variable `remain`
     Copy(header_, fd_backup_, fd_dst, 0);
     if (-1 == close(fd_dst)){
-        throw UnPackException(dst_file_, "Fail to close regular file");
+        throw new UnPackException(dst_file_, "Fail to close regular file");
     }
 }
 
@@ -97,14 +100,14 @@ void UnPacker::UnPackFIFO()
     // TODO
     // figure out the mode
     if (-1 == mkfifo(dst_file_.c_str(), 00664)){
-        throw UnPackException(dst_file_, "Fail to create FIFO file");
+        throw new UnPackException(dst_file_, "Fail to create FIFO file");
     }
 }
 
 void UnPacker::UnPackSLNK()
 {
     if (symlink(header_.getSymbol().c_str(), dst_file_.c_str())){
-        throw UnPackException(dst_file_, "Fail to create symbolic file");
+        throw new UnPackException(dst_file_, "Fail to create symbolic file");
     }
 }
 
@@ -116,7 +119,7 @@ void UnPacker::Init(const string &src, const string &dst)
         struct stat st_buf;
         stat(dst.c_str(), &st_buf);
         if (!S_ISDIR(st_buf.st_mode)){
-            throw UnPackException(dst, "Target path is not a directory");
+            throw new UnPackException(dst, "Target path is not a directory");
         }
     } else{
         RecurMkdir(dst);
@@ -129,14 +132,14 @@ void UnPacker::Init(const string &src, const string &dst)
 
     fd_backup_ = open(src.c_str(), O_RDONLY);
     if (-1 == fd_backup_){
-        throw UnPackException(src, "Fail to open source backup file");
+        throw new UnPackException(src, "Fail to open source backup file");
     }
 }
 
 void UnPacker::Clear(const string &src)
 {
     if (-1 == close(fd_backup_)){
-        throw UnPackException(src, "Fail to close source backup file");
+        throw new UnPackException(src, "Fail to close source backup file");
     }
 }
 
@@ -151,7 +154,7 @@ void UnPacker::RecurMkdir(const string &dst)
     while (dst.end() != iter){
         local_offset = (size_t)(find(iter, dst.end(), '/')-iter);
         if (0 == local_offset){
-            throw UnPackException(dst, "Wrong format destination");
+            throw new UnPackException(dst, "Wrong format destination");
         }
         ++local_offset;
         iter += local_offset;
@@ -166,11 +169,11 @@ void UnPacker::RecurMkdir(const string &dst)
             struct stat st_buf;
             stat(token.c_str(), &st_buf);
             if (!S_ISDIR(st_buf.st_mode)){
-                throw UnPackException(dst, "Wrong format destination");
+                throw new UnPackException(dst, "Wrong format destination");
             }
         } else{
             if (-1 == mkdir(token.c_str(), 00775)){
-                throw UnPackException(dst, "Fail to create directory");
+                throw new UnPackException(dst, "Fail to create directory");
             }
         }
 

@@ -15,7 +15,8 @@ ADD ./websocketpp /tmp/websocketpp
 VOLUME ["/DataBackup"]
 
 RUN apt-get update && \
-apt-get install -y build-essential libssl-dev gcc g++ libjsoncpp-dev
+apt-get install -y build-essential libssl-dev gcc g++ libjsoncpp-dev && \
+apt-get install -y nodejs npm
 
 # compile cmake
 RUN cd /tmp/cmake-${CMAKE_VER} && \
@@ -35,5 +36,13 @@ RUN cd /tmp/websocketpp && \
 mkdir build && \
 cd build && \
 cmake .. && \
+make && \
+make install
+
+# compile open-ssl
+ARG OPENSSL_VER=3.0.0
+ADD ./openssl-${OPENSSL_VER}.tar.gz /tmp/
+RUN cd /tmp/openssl-${OPENSSL_VER} && \
+./Configure && \
 make && \
 make install
