@@ -40,19 +40,16 @@ public:
 class Packer {
 public:
     int Handle(const std::string &src, const std::string &dst);
-    void SetSrcFiles(const std::vector<std::string> &src_files);
 // Todo: 方便测试，暂public
 // private:
 public:
     void Pack(const std::string &src_file);
-    // 注意本函数并不专门处理软链接
     void ParseHeader(const std::string &src_file, const struct stat &st_buf);
     void PackDir(const std::string &src_file, const struct stat &st_buf);
     void PackRegular(const std::string &src_file, const struct stat &st_buf);
     void PackLink(const std::string &src_file, const struct stat &st_buf);
     void RestoreAccessTime(const std::string &src_file, const struct stat &st_buf);
 private:
-    std::vector<std::string> src_files_;
     std::string abs_parent_path_;
     std::string dst_file_;
     int dst_fd_;

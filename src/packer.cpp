@@ -7,7 +7,6 @@ using namespace std;
 
 /**
  * Todo：假设了输入、输出的路径均为绝对路径，且不为链接
- * 务必先set src_files
  * 
  * 打包处理：对于每个src_file，需得到父目录绝对路径，以得到目录项相对路径
  */
@@ -15,28 +14,21 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     try
     {
         // 1、Init工作
-        if(src_files_.empty()) {
-            throw PackException("", "bad src path");
-        }
-        if(0==access(dst.c_str(), F_OK)) {
-            struct stat st_buf;
-            stat(dst.c_str(), &st_buf);
-            if(!S_ISDIR(st_buf.st_mode)) {
-                throw PackException("", "dst path not a directory");
-            }
-        } else {
-            // Todo：应该进行递归目录创建
-            if(-1==mkdir(dst.c_str(), 0777)) {
-                throw PackException("", "mkdir failed");
-            }
-        }
-        // 创建backup文件：多源路径、一个源路径 命名方式不同
-        if(src_files_.size()==1) {
-            dst_file_ = dst + '/' + basename(src_files_[0].c_str()) + ".backup";
-        } else {
-            dst_file_ = dst + '/' + basename(dst.c_str()) + ".backup";
-        }
-        dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY);
+        // if(0==access(dst.c_str(), F_OK)) {
+        //     struct stat st_buf;
+        //     stat(dst.c_str(), &st_buf);
+        //     if(!S_ISDIR(st_buf.st_mode)) {
+        //         throw PackException("", "dst path not a directory");
+        //     }
+        // } else {
+        //     // Todo：应该进行递归目录创建
+        //     if(-1==mkdir(dst.c_str(), 0777)) {
+        //         throw PackException("", "mkdir failed");
+        //     }
+        // }
+        dst_file_ = dst;
+        // APPEND：支持多个源文件调用
+        dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_APPEND);
         if(-1==dst_fd_) {
             throw PackException("", "failed to open backup file");
         }
@@ -45,16 +37,10 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         errs_.clear();
 
         // 2、打包
-        for(const string &s : src_files_) {
-            abs_parent_path_ = string(s.begin(), s.begin()+s.find_last_of('/')+1);
-            Pack(s);
-        }
-
-        // extra: sha256 hash
-        
+        abs_parent_path_ = string(src.begin(), src.begin()+src.find_last_of('/')+1);
+        Pack(src);
 
         // 3、清理工作
-        src_files_.clear();
         // if(-1 == close(src_fd_)) {
         //     throw PackException("", "failed to close src_fd");
         // }
@@ -71,14 +57,10 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     // Exception handle
     for (Exception &err : errs_){
         err.what();
-        cout << err.what() << endl;
+        // cout << err.what() << endl;
     }
 
     return 0;
-}
-
-void Packer::SetSrcFiles(const std::vector<std::string> &src_files) {
-    src_files_ = src_files;
 }
 
 void Packer::Pack(const std::string &src_file) {

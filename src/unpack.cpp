@@ -161,7 +161,7 @@ void UnPacker::RecurMkdir(const string &dst)
 
         // TODO
         // only for test
-        cout<<token<<endl;
+        // cout<<token<<endl;
 
         if (0 == access(token.c_str(), F_OK)){
             struct stat st_buf;
