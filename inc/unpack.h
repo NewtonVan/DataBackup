@@ -11,10 +11,6 @@
 #include "handler.h"
 #include "exception_interface.h"
 
-// TODO
-// It's a better design use interface-implementation structure
-// the "source" of all the exception might as well defined in "header.h"
-// packer, unpacker, copier should inherit from it
 class UnPackException : public BaseException{
 public:
     UnPackException(const std::string &file_nm, const std::string &msg)
@@ -27,16 +23,12 @@ public:
         return "Unpack Exception : "+BaseException::what();
     }
 };
-// TODO
-// Reconstruct the class
-// ChainOfResponsibility is a better choice than Singleton
+
 class UnPacker : public BaseHandler, public ExceptionContainer{
 public:
     UnPacker() = default;
-    // static UnPacker& GetInstance();
     int Handle(const std::string &src, const std::string &dst) override;
 private:
-    // UnPacker(const UnPacker &up) = delete;
     const UnPacker& operator = (const UnPacker &up) = delete;
     void Extract();
     void UnPackDir();

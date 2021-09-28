@@ -7,7 +7,6 @@ using namespace std;
 
 int UnPacker::Handle(const string &src, const string &dst)
 {
-    // TODO
     // proper exception handle mechanism
     try
     {
@@ -20,7 +19,6 @@ int UnPacker::Handle(const string &src, const string &dst)
         errs_.push_back(shared_ptr<BaseException>(err));
     }
     
-    // TODO
     // Exception handle
     int ret = ExceptionContainer::ShowErrs();
 

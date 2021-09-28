@@ -12,18 +12,6 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     try
     {
         // 1、Init工作
-        // if(0==access(dst.c_str(), F_OK)) {
-        //     struct stat st_buf;
-        //     stat(dst.c_str(), &st_buf);
-        //     if(!S_ISDIR(st_buf.st_mode)) {
-        //         throw new PackException("", "dst path not a directory");
-        //     }
-        // } else {
-        //     // Todo：应该进行递归目录创建
-        //     if(-1==mkdir(dst.c_str(), 0777)) {
-        //         throw new PackException("", "mkdir failed");
-        //     }
-        // }
         dst_file_ = dst;
         // APPEND：支持多个源文件调用
         dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_APPEND);
@@ -39,9 +27,6 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         Pack(src);
 
         // 3、清理工作
-        // if(-1 == close(src_fd_)) {
-        //     throw new PackException("", "failed to close src_fd");
-        // }
         if(-1 == close(dst_fd_)) {
             throw new PackException("", "failed to close dst_fd");
         }
@@ -51,7 +36,6 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         errs_.push_back(shared_ptr<BaseException>(err));
     }
     
-    // TODO
     // Exception handle
     int ret = ExceptionContainer::ShowErrs();
 

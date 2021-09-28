@@ -31,18 +31,15 @@ public:
 class  Compresser : public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
-// Todo: for test
-// private:
-public:
+private:
     void Init(const std::string &src, const std::string &dst);
     void WordFreqCount();
     void GenerateCodingTable();
     void WriteHeader();
     void WriteData();
     void Clear();
-// Todo: for test
-// private:
-public:
+
+private:
     std::string src_file_;
     int src_fd_;
     std::string dst_file_;
