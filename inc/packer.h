@@ -28,7 +28,7 @@ class PackException : public BaseException{
 public:
     PackException(const std::string &file_nm, const std::string &msg)
         : BaseException(file_nm, msg) {}
-    std::string what() {
+    std::string what() const {
         return "Pack Exception : "+BaseException::what();
     }
 };
@@ -37,7 +37,7 @@ public:
  * 输入：一个或多个文件的路径；一个目标路径
  * 操作：将所有文件打包至目标文件夹下
  */
-class Packer {
+class Packer : public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
 // Todo: 方便测试，暂public
@@ -54,7 +54,6 @@ private:
     std::string dst_file_;
     int dst_fd_;
     std::unordered_set<nlink_t> hard_link_set_;
-    std::vector<BaseException> errs_;
     Header header_;
 };
 

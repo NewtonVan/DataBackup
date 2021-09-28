@@ -24,7 +24,7 @@ public:
     {
 
     }
-    string what()
+    string what() const
     {
         return "JsonParse Exception : "+BaseException::what();
     }
@@ -39,8 +39,10 @@ public:
     string& getDst();
     string& getJsonString();
     string& getPath();
+    string& getKey();
     void Decode(const std::string &input);
     void Encode(int err_code, vector<DirEntry> &file_nm);
+    void Encode(int err_code, string path);
 private:
     Json::Reader reader_;
     Json::Value root_;
@@ -51,6 +53,7 @@ private:
     string dst_;
     string json_str_;
     string path_;
+    string key_;
     uint64_t seq_;
 };
 

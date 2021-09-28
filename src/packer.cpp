@@ -16,19 +16,19 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         //     struct stat st_buf;
         //     stat(dst.c_str(), &st_buf);
         //     if(!S_ISDIR(st_buf.st_mode)) {
-        //         throw PackException("", "dst path not a directory");
+        //         throw new PackException("", "dst path not a directory");
         //     }
         // } else {
         //     // Todo：应该进行递归目录创建
         //     if(-1==mkdir(dst.c_str(), 0777)) {
-        //         throw PackException("", "mkdir failed");
+        //         throw new PackException("", "mkdir failed");
         //     }
         // }
         dst_file_ = dst;
         // APPEND：支持多个源文件调用
         dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_APPEND);
         if(-1==dst_fd_) {
-            throw PackException("", "failed to open backup file");
+            throw new PackException("", "failed to open backup file");
         }
         // 其他成员变量初始化
         hard_link_set_.clear();
@@ -40,31 +40,29 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
 
         // 3、清理工作
         // if(-1 == close(src_fd_)) {
-        //     throw PackException("", "failed to close src_fd");
+        //     throw new PackException("", "failed to close src_fd");
         // }
         if(-1 == close(dst_fd_)) {
-            throw PackException("", "failed to close dst_fd");
+            throw new PackException("", "failed to close dst_fd");
         }
     }
-    catch(const BaseException &err)
+    catch(BaseException *err)
     {
-        errs_.push_back(err);
+        errs_.push_back(shared_ptr<BaseException>(err));
     }
     
     // TODO
     // Exception handle
-    for (Exception &err : errs_){
-        err.what();
-    }
+    int ret = ExceptionContainer::ShowErrs();
 
-    return 0;
+    return ret;
 }
 
 void Packer::Pack(const std::string &src_file) {
     // 检查src file有效性，小心解引用
     struct stat st_buf;
     if(-1 == lstat(src_file.c_str(), &st_buf)) {
-        throw PackException("", "lstat failed on "+src_file);
+        throw new PackException("", "lstat failed on "+src_file);
     }
     ParseHeader(src_file, st_buf);
     if(S_ISDIR(st_buf.st_mode)) {
@@ -73,7 +71,7 @@ void Packer::Pack(const std::string &src_file) {
         PackRegular(src_file, st_buf);
     } else if(S_ISFIFO(st_buf.st_mode)) {
         if(-1==header_.Serialize(dst_fd_)) {
-            throw PackException("", "write header failed: " + src_file);
+            throw new PackException("", "write header failed: " + src_file);
         }
     } else if(S_ISLNK(st_buf.st_mode)) { // 符号链接
         PackLink(src_file, st_buf);
@@ -116,14 +114,14 @@ void Packer::ParseHeader(const std::string &src_file, const struct stat &st_buf)
 void Packer::PackDir(const std::string &src_file, const struct stat &st_buf) {
     // header序列化
     if(-1 == header_.Serialize(dst_fd_)) {
-        throw PackException("", "write header failed: " + src_file);
+        throw new PackException("", "write header failed: " + src_file);
     }
     // 目录项递归处理
     DIR *dirp;
     dirent *dp;
     dirp = opendir(src_file.c_str());
     if(NULL == dirp) {
-        throw PackException("", "opendir failed on " + src_file);
+        throw new PackException("", "opendir failed on " + src_file);
     }
     for(;;) {
         errno = 0;
@@ -140,11 +138,11 @@ void Packer::PackDir(const std::string &src_file, const struct stat &st_buf) {
         Pack(child_filename);
     }
     if(0 != errno) {
-        throw PackException("", "readdir failed on " + src_file);
+        throw new PackException("", "readdir failed on " + src_file);
     }
     // close dir fd
     if(-1 == closedir(dirp)) {
-        throw PackException("", "closedir failed on " + src_file);
+        throw new PackException("", "closedir failed on " + src_file);
     }
     // 还原访问时间
     RestoreAccessTime(src_file, st_buf);
@@ -165,20 +163,20 @@ void Packer::PackRegular(const std::string &src_file, const struct stat &st_buf)
         }
     }
     if(-1==header_.Serialize(dst_fd_)) {
-        throw PackException("", "write header failed: " + src_file);
+        throw new PackException("", "write header failed: " + src_file);
     }
     // 不是硬链接，需写入数据块
     if(!is_hard_link) {
         int src_fd = open(src_file.c_str(), O_RDONLY);
         if(src_fd==-1) {
-            throw PackException("", "open failed on " + src_file);
+            throw new PackException("", "open failed on " + src_file);
         }
         ulong block_num =  header_.getNumBlock();
         char data_block_buf[MY_BLOCK_SIZE];
         for(ulong i=0; i<block_num; i++) {
             ssize_t read_num = read(src_fd, data_block_buf, MY_BLOCK_SIZE);
             if(0>=read_num) {
-                throw PackException("", "read failed on " + src_file);
+                throw new PackException("", "read failed on " + src_file);
             }
             if(i==block_num-1) {
                 // 最后一个数据块需要置零
@@ -187,11 +185,11 @@ void Packer::PackRegular(const std::string &src_file, const struct stat &st_buf)
                 }
             }
             if(MY_BLOCK_SIZE != write(dst_fd_, data_block_buf, MY_BLOCK_SIZE)) {
-                throw PackException("", "write failed: " + src_file);
+                throw new PackException("", "write failed: " + src_file);
             }
         }
         if(-1==close(src_fd)) {
-            throw PackException("", "close failed on " + src_file);
+            throw new PackException("", "close failed on " + src_file);
         }
         // 还原访问时间
         RestoreAccessTime(src_file, st_buf);
@@ -203,14 +201,14 @@ void Packer::PackLink(const std::string &src_file, const struct stat &st_buf) {
     char buf[PATH_MAX+1];
     ssize_t read_num = readlink(src_file.c_str(), buf, PATH_MAX);
     if(-1==read_num) {
-        throw PackException("", "readlink failed on " + src_file);
+        throw new PackException("", "readlink failed on " + src_file);
     }
     buf[read_num] = '\0';
     string ln_path(buf);
     header_.setSymbol(ln_path);
     header_.setLenSymbol(ln_path.size());
     if(-1==header_.Serialize(dst_fd_)) {
-        throw PackException("", "write header failed: " + src_file);
+        throw new PackException("", "write header failed: " + src_file);
     }
 }
 
@@ -219,6 +217,6 @@ void Packer::RestoreAccessTime(const std::string &src_file, const struct stat &s
     tm[0] = st_buf.st_atim;
     tm[1].tv_nsec = UTIME_OMIT;
     if(utimensat(AT_FDCWD, src_file.c_str(), tm, AT_SYMLINK_NOFOLLOW)==-1) {
-        throw PackException("", "utimenstat failed on " + src_file);
+        throw new PackException("", "utimenstat failed on " + src_file);
     }
 }

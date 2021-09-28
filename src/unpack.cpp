@@ -22,14 +22,9 @@ int UnPacker::Handle(const string &src, const string &dst)
     
     // TODO
     // Exception handle
-    for (auto &err : errs_){
-        err->what();
-    }
-    if (errs_.empty()){
-        return 0;
-    } else{
-        return -1;
-    }
+    int ret = ExceptionContainer::ShowErrs();
+
+    return ret;
 }
 
 void UnPacker::Extract()

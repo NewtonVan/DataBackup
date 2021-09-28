@@ -24,7 +24,7 @@ class ShaException : public BaseException{
 public:
     ShaException(const std::string &file_nm, const std::string &msg)
         : BaseException(file_nm, msg) {}
-    std::string what() {
+    std::string what() const {
         return "Sha Exception : "+BaseException::what();
     }
 };

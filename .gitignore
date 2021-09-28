@@ -55,3 +55,6 @@ test/
 env_confg/*
 !env_confg/Dockerfile
 !env_confg/sources.list
+
+# Front-end
+front_end/*

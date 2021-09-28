@@ -16,14 +16,13 @@ class DecompresseException : public BaseException {
 public:
     DecompresseException(const std::string &file_nm, const std::string &msg)
         : BaseException(file_nm, msg) {}
-    std::string what() {
+    std::string what() const {
         return "Decompresse Exception : "+BaseException::what();
     }
 };
 
 
-class Decompresser
-{
+class Decompresser : public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
 private:
@@ -39,7 +38,6 @@ private:
     unsigned int last_byte_effective_; 
     std::vector<TreeNode *> counts_;
     TreeNode *huff_root_;
-    std::vector<DecompresseException> errs_;
 };
 
 #endif

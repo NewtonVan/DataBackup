@@ -70,13 +70,13 @@ public:
             if (Utils::GetBit(flag, ENC_INDEX)){
                 Decryptor *decryptor = new Decryptor;
                 // TODO 重要
-                decryptor->SetPassword("abc");
+                decryptor->SetPassword(backend->js_parser_.getKey());
                 t_dst = "/tmp/"+Utils::BaseName(t_src)+".dec";
                 err_code |= decryptor->Handle(t_src, t_dst);
                 t_src = t_dst;
                 delete decryptor;
             }
-            if (Utils::GetBit(flag, CMP_INDEX)){
+            if (!err_code && Utils::GetBit(flag, CMP_INDEX)){
                 Decompresser *decomp = new Decompresser;
                 t_dst = "/tmp/"+Utils::BaseName(t_src)+".dcmp";
                 err_code |= decomp->Handle(t_src, t_dst);
@@ -87,15 +87,16 @@ public:
                 t_src = t_dst;
                 delete decomp;
             }
-          
-            UnPacker *unpacker = new UnPacker;
-            err_code |= unpacker->Handle(t_src, dst);
-            if (t_src != src){
-                // TODO
-                remove(t_src.c_str());
+            if (!err_code){
+                UnPacker *unpacker = new UnPacker;
+                err_code |= unpacker->Handle(t_src, dst);
+                if (t_src != src){
+                    // TODO
+                    remove(t_src.c_str());
+                }
+                delete unpacker;
             }
-            delete unpacker;
-
+          
             backend->js_parser_.Encode(err_code, dir_entries);
 
             // 4、文件还原
@@ -127,15 +128,20 @@ public:
 
             backend->js_parser_.Encode(err_code, dir_entries);
         } else if ("getList" == backend->js_parser_.getMethod()){
-            backend->abs_path_ += backend->js_parser_.getPath() + '/';
-            cout << backend->abs_path_ << endl;
+            backend->abs_path_ = backend->js_parser_.getPath();
+            if ('/' != backend->abs_path_.back()){
+                backend->abs_path_.push_back('/');
+            }
+            // cout << backend->abs_path_ << endl;
             DIR *dirp;
             dirent *dp;
             dirp = opendir(backend->abs_path_.c_str());
             if(NULL == dirp) {
                 // TODO
                 // throw PackException("", "opendir failed on " + src_file);
-                // err_code = 1;
+                err_code = 1;
+                backend->js_parser_.Encode(err_code, dir_entries);
+                goto RESPONSE;
             }
             for(;;) {
                 errno = 0;
@@ -179,7 +185,10 @@ public:
             }
 
             backend->js_parser_.Encode(err_code, dir_entries);
-        } else{
+        } else if ("getPWD"==backend->js_parser_.getMethod()){
+            backend->js_parser_.Encode(err_code, backend->abs_path_.substr(0, backend->abs_path_.length()-1));
+            // cout<<backend->js_parser_.getJsonString()<<endl;
+        } else {
             unsigned char flag = 0;
             string the_dst{""};
             if ("pack" == backend->js_parser_.getMethod()){
@@ -245,7 +254,7 @@ public:
                 string enc_dst =  dst_dir + '/' + Utils::BaseName(pk_src) +".enc";
                 Encryptor *encryptor = new Encryptor;
                 // Todo
-                encryptor->SetPassword("abc");
+                encryptor->SetPassword(backend->js_parser_.getKey());
                 err_code |= encryptor->Handle(enc_src, enc_dst);
                 delete encryptor;
                 the_dst = enc_dst;
@@ -273,7 +282,7 @@ public:
             }
         }
 
-        server &s = MServer::GetInstance().GetEP();
+RESPONSE: server &s = MServer::GetInstance().GetEP();
         s.send(hdl, backend->js_parser_.getJsonString(), msg->get_opcode());
     }
     void Run();

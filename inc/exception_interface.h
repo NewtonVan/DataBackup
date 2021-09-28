@@ -3,6 +3,8 @@
 
 #include <string>
 #include <memory>
+#include <vector>
+#include <iostream>
 
 using std::shared_ptr;
 
@@ -26,4 +28,23 @@ public:
         return file_nm_ + " : " +msg_;
     }
 };
+
+class ExceptionContainer{
+protected:
+    std::vector<shared_ptr<BaseException> > errs_;
+public:
+    int ShowErrs()
+    {
+        if (errs_.empty()){
+            return 0;
+        }
+
+        for (auto err : errs_){
+            std::cerr << err->what() << std::endl;
+        }
+
+        return -1;
+    }
+};
+
 #endif

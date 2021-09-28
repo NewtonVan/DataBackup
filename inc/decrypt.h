@@ -21,7 +21,7 @@ class DecryptException : public BaseException {
 public:
     DecryptException(const std::string &file_nm, const std::string &msg)
         : BaseException(file_nm, msg) {}
-    std::string what() {
+    std::string what() const {
         return "Decrypt Exception : "+BaseException::what();
     }
 };
@@ -29,7 +29,7 @@ public:
 /**
  * 使用：务必先set pwd，然后进行handle
  */
-class Decryptor {
+class Decryptor : public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
     void SetPassword(const std::string &pwd) {
@@ -50,7 +50,6 @@ private:
     std::string dst_file_;
     int dst_fd_;
     std::string pwd_;
-    std::vector<BaseException> errs_;
 };
 
 #endif

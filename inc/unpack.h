@@ -22,7 +22,7 @@ public:
     {
 
     }
-    std::string what()
+    std::string what() const
     {
         return "Unpack Exception : "+BaseException::what();
     }
@@ -30,7 +30,7 @@ public:
 // TODO
 // Reconstruct the class
 // ChainOfResponsibility is a better choice than Singleton
-class UnPacker : public BaseHandler{
+class UnPacker : public BaseHandler, public ExceptionContainer{
 public:
     UnPacker() = default;
     // static UnPacker& GetInstance();
@@ -53,7 +53,6 @@ private:
     std::string dst_file_;
     int fd_backup_;
     std::map<ino_t, std::string> hard_lk_map_;
-    std::vector<shared_ptr<BaseException> > errs_;
     Header header_;
 };
 

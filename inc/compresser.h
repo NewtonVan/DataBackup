@@ -22,13 +22,13 @@ class CompresseException : public BaseException {
 public:
     CompresseException(const std::string &file_nm, const std::string &msg)
         : BaseException(file_nm, msg) {}
-    std::string what() {
+    std::string what() const {
         return "Compresse Exception : "+BaseException::what();
     }
 };
 
 
-class  Compresser {
+class  Compresser : public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
 // Todo: for test
@@ -50,7 +50,6 @@ public:
     std::vector<TreeNode *> counts_;
     std::unordered_map<unsigned char, std::string> coding_table_;
     unsigned int last_byte_effective_;
-    std::vector<CompresseException> errs_;
 };
 
 #endif

@@ -28,6 +28,11 @@ string& JsonParser::getPath()
     return path_;
 }
 
+string& JsonParser::getKey()
+{
+    return key_;
+}
+
 void JsonParser::Decode(const std::string &input)
 {
     try
@@ -44,6 +49,9 @@ void JsonParser::Decode(const std::string &input)
         }
         if (root_.isMember("path")){
             path_ = root_["path"].asString();
+        }
+        if (root_.isMember("key")){
+            key_ = root_["key"].asString();
         }
     }
     catch(Json::Exception &e)
@@ -76,4 +84,22 @@ void JsonParser::Encode(int err_code, vector<DirEntry> &entries)
     catch(const std::exception& e)
     {
     }
+}
+
+void JsonParser::Encode(int err_code, string path)
+{
+    try
+    {
+        root_.clear();
+        root_["ack"] = Json::UInt64(seq_);
+        root_["errcode"] = Json::Value(err_code);
+        root_["pwd"] = Json::Value(path);
+
+        json_str_ = writer_.write(root_);
+    }
+    catch(const std::exception& e)
+    {
+        // std::cerr << e.what() << '\n';
+    }
+    
 }
