@@ -50,7 +50,7 @@ void Decompresser::Init(const std::string &src, const std::string &dst) {
     // 打开dst_file
     // Todo：解压文件名称
     dst_file_ = dst;
-    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
+    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw new DecompresseException("", "open failed on " + dst_file_);
     }
@@ -165,7 +165,7 @@ void Decompresser::Clear() {
     if(-1 == close(src_fd_)) {
         throw new DecompresseException("", "failed to close src_fd");
     }
-
+    fsync(dst_fd_);
     if(-1 == close(dst_fd_)) {
         throw new DecompresseException("", "failed to close dst_fd");
     }

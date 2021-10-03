@@ -243,7 +243,7 @@ void Compresser::Clear() {
     if(-1 == close(src_fd_)) {
         throw new CompresseException("", "failed to close src_fd");
     }
-
+    fsync(dst_fd_);
     if(-1 == close(dst_fd_)) {
         throw new CompresseException("", "failed to close dst_fd");
     }

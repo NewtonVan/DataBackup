@@ -20,7 +20,7 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         }
 
         // APPEND：支持多个源文件调用
-        dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_APPEND);
+        dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_TRUNC);
         if(-1==dst_fd_) {
             throw new PackException("", "failed to open backup file");
         }
@@ -33,6 +33,7 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         Pack(src);
 
         // 3、清理工作
+        fsync(dst_fd_);
         if(-1 == close(dst_fd_)) {
             throw new PackException("", "failed to close dst_fd");
         }

@@ -83,6 +83,7 @@ void UnPacker::UnPackReg()
     // TODO
     // confused about cun's code, query him about variable `remain`
     Copy(header_, fd_backup_, fd_dst, 0);
+    fsync(fd_dst);
     if (-1 == close(fd_dst)){
         throw new UnPackException(dst_file_, "Fail to close regular file");
     }

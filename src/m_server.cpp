@@ -10,6 +10,7 @@ void MServer::Init(uint16_t port, void (*on_message_fun)(websocketpp::connection
 {
     try
     {
+        end_point_.set_reuse_addr(true);
         end_point_.set_access_channels(websocketpp::log::alevel::none);
         end_point_.clear_access_channels(websocketpp::log::alevel::none);  
 

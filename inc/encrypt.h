@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <algorithm>
 
 #include "handler.h"
 #include "exception_interface.h"

@@ -1,5 +1,7 @@
 #include "decrypt.h"
 
+using namespace std;
+
 int Decryptor::Handle(const std::string &src, const std::string &dst) {
     try
     {
@@ -41,7 +43,7 @@ void Decryptor::Init(const std::string &src, const std::string &dst) {
 
     // 打开dst_file
     dst_file_ = dst;
-    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT, 0777);
+    dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw new DecryptException("", "open failed on dst file");
     }
@@ -77,7 +79,12 @@ void Decryptor::Decrypt() {
     unsigned char iv[AES_BLOCK_SIZE];
     memset(iv, 0, AES_BLOCK_SIZE);
     AES_KEY my_key;
-    if(0 > AES_set_decrypt_key((const unsigned char *)pwd_.c_str(), 
+    string pwd_padding(16, '\0');
+    int loop_times = min(16, (int)pwd_.size());
+    for(int i=0; i<loop_times; i++) {
+        pwd_padding[i] = pwd_[i];
+    }
+    if(0 > AES_set_decrypt_key((const unsigned char *)pwd_padding.c_str(), 
         128, &my_key)) {
         throw new DecryptException("", "failed to generate AES key");
     }
@@ -120,6 +127,7 @@ void Decryptor::Clear() {
     if(-1 == close(src_fd_)) {
         throw new DecryptException("", "failed to close src_fd");
     }
+    fsync(dst_fd_);
     if(-1 == close(dst_fd_)) {
         throw new DecryptException("", "failed to close dst_fd");
     }

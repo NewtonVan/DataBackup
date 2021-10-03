@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-using std::string;
-using std::vector;
+using namespace std;
 
 int Encryptor::Handle(const std::string &src, const std::string &dst) {
     int err_code = 0;
@@ -92,7 +91,12 @@ void Encryptor::Encrypt() {
     unsigned char iv[AES_BLOCK_SIZE];
     memset(iv, 0, AES_BLOCK_SIZE);
     AES_KEY my_key;
-    if(0 > AES_set_encrypt_key((const unsigned char *)pwd_.c_str(), 
+    string pwd_padding(16, '\0');
+    int loop_times = min(16, (int)pwd_.size());
+    for(int i=0; i<loop_times; i++) {
+        pwd_padding[i] = pwd_[i];
+    }
+    if(0 > AES_set_encrypt_key((const unsigned char *)pwd_padding.c_str(), 
         128, &my_key)) {
         throw new EncryptException("", "failed to generate AES key");
     }
@@ -123,6 +127,7 @@ void Encryptor::Clear() {
     if(-1 == close(src_fd_)) {
         throw new EncryptException("", "failed to close src_fd");
     }
+    fsync(dst_fd_);
     if(-1 == close(dst_fd_)) {
         throw new EncryptException("", "failed to close dst_fd");
     }
