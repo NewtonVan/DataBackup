@@ -13,6 +13,8 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     try
     {
         // 1、Init工作
+        // TODO
+        // refactor
         if (IsEnd()){
             dst_file_ = dst+"/"+Utils::BaseName(src)+".pak";
         } else{
@@ -37,15 +39,19 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         if(-1 == close(dst_fd_)) {
             throw new PackException("", "failed to close dst_fd");
         }
-
-        err_code |= BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
         errs_.push_back(shared_ptr<BaseException>(err));
     }
     
-    // Exception handle
+    // TODO
+    // refactor
+    err_code = BaseHandler::Handle(dst_file_, dst);
+    if (!IsEnd()){
+        remove(dst_file_.c_str());
+    }
+    // exception handle
     err_code |= ExceptionContainer::ShowErrs();
 
     return err_code;

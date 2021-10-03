@@ -21,9 +21,6 @@ int Compresser::Handle(const std::string &src, const std::string &dst) {
         WriteHeader();
         WriteData();
         Clear();
-        // TODO
-        // refactor
-        err_code = BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
@@ -32,7 +29,12 @@ int Compresser::Handle(const std::string &src, const std::string &dst) {
 
     // TODO
     // refactor
-    err_code = ExceptionContainer::ShowErrs();
+    err_code = BaseHandler::Handle(dst_file_, dst);
+    if (!IsEnd()){
+        remove(dst_file_.c_str());
+    }
+    // exception handle
+    err_code |= ExceptionContainer::ShowErrs();
 
     return err_code;
 }
@@ -247,8 +249,4 @@ void Compresser::Clear() {
     if(-1 == close(dst_fd_)) {
         throw new CompresseException("", "failed to close dst_fd");
     }
-
-    // TODO
-    // refactor
-    remove(src_file_.c_str());
 }

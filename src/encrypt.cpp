@@ -12,17 +12,19 @@ int Encryptor::Handle(const std::string &src, const std::string &dst) {
         GenerateDigest();
         Encrypt();
         Clear();
-        // TODO
-        // refactor
-        err_code = BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
         errs_.push_back(shared_ptr<BaseException>(err));
     }
-    
+
     // TODO
-    // Exception handle
+    // refactor
+    err_code = BaseHandler::Handle(dst_file_, dst);
+    if (!IsEnd()){
+        remove(dst_file_.c_str());
+    }
+    // exception handle
     err_code |= ExceptionContainer::ShowErrs();
 
     return err_code;
@@ -131,7 +133,4 @@ void Encryptor::Clear() {
     if(-1 == close(dst_fd_)) {
         throw new EncryptException("", "failed to close dst_fd");
     }
-    // TODO
-    // refactor
-    remove(src_file_.c_str());
 }

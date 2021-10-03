@@ -114,8 +114,9 @@ public:
         } else if ("copy" == backend->js_parser_.getMethod()){
             Packer *packer = new Packer;
             string pk_src = backend->js_parser_.getSrc();
-            string pk_dst = "/tmp/"+Utils::BaseName(pk_src) +".pak";
+            string pk_dst = "/tmp";
             err_code = packer->Handle(pk_src, pk_dst);
+            pk_dst += "/"+Utils::BaseName(pk_src)+".pak";
             delete packer;
 
             UnPacker *unpacker = new UnPacker;
