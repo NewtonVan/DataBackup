@@ -9,10 +9,16 @@ using namespace std;
  * 打包处理：对于每个src_file，需得到父目录绝对路径，以得到目录项相对路径
  */
 int Packer::Handle(const std::string &src, const std::string &dst) {
+    int err_code = 0;
     try
     {
         // 1、Init工作
-        dst_file_ = dst;
+        if (IsEnd()){
+            dst_file_ = dst+"/"+Utils::BaseName(src)+".pak";
+        } else{
+            dst_file_ = "/tmp/"+Utils::BaseName(src)+".pak";
+        }
+
         // APPEND：支持多个源文件调用
         dst_fd_ = open(dst_file_.c_str(), O_CREAT | O_WRONLY | O_APPEND);
         if(-1==dst_fd_) {
@@ -30,6 +36,8 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
         if(-1 == close(dst_fd_)) {
             throw new PackException("", "failed to close dst_fd");
         }
+
+        err_code |= BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
@@ -37,9 +45,9 @@ int Packer::Handle(const std::string &src, const std::string &dst) {
     }
     
     // Exception handle
-    int ret = ExceptionContainer::ShowErrs();
+    err_code |= ExceptionContainer::ShowErrs();
 
-    return ret;
+    return err_code;
 }
 
 void Packer::Pack(const std::string &src_file) {

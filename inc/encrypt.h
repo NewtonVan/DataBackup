@@ -14,6 +14,8 @@
 
 #include "handler.h"
 #include "exception_interface.h"
+#include "handler.h"
+#include "utils.h"
 
 #define MAX_BUF_SIZE 4096  // 必须是16的倍数
 
@@ -29,7 +31,7 @@ public:
 /**
  * 使用：务必先set pwd，然后进行handle
  */
-class Encryptor : public ExceptionContainer{
+class Encryptor : public BaseHandler, public ExceptionContainer{
 public:
     int Handle(const std::string &src, const std::string &dst);
     void SetPassword(const std::string &pwd) {

@@ -2,11 +2,15 @@
 #define HANDLER_H
 
 #include <string>
+#include <cstdio>
+
+#include "utils.h"
 
 class Handler{
 public:
     virtual Handler *SetNext(Handler *handler) = 0;
     virtual int Handle(const std::string &src, const std::string &dst) = 0;
+    virtual bool IsEnd() = 0;
 };
 
 class BaseHandler : public Handler{
@@ -28,7 +32,12 @@ public:
             return this->next_handler_->Handle(src, dst);
         }
 
-        return -1;
+        printf("%s\n", src.c_str());
+        return 0;
+    }
+    bool IsEnd()
+    {
+        return nullptr == this->next_handler_;
     }
 };
 

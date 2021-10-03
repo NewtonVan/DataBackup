@@ -15,6 +15,8 @@
 
 #include "huffman_tree.h"
 #include "exception_interface.h"
+#include "utils.h"
+#include "handler.h"
 
 #define MAX_BUF_SIZE 4096
 
@@ -28,7 +30,7 @@ public:
 };
 
 
-class  Compresser : public ExceptionContainer{
+class  Compresser : public ExceptionContainer, public BaseHandler{
 public:
     int Handle(const std::string &src, const std::string &dst);
 private:

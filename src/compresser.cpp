@@ -12,6 +12,7 @@ using namespace std;
  * 6、清理工作
  */
 int Compresser::Handle(const std::string &src, const std::string &dst) {
+    int err_code = 0;
     try
     {
         Init(src, dst);
@@ -20,16 +21,20 @@ int Compresser::Handle(const std::string &src, const std::string &dst) {
         WriteHeader();
         WriteData();
         Clear();
+        // TODO
+        // refactor
+        err_code = BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
         errs_.push_back(shared_ptr<BaseException>(err));
     }
 
-    // Exception Handle
-    int ret = ExceptionContainer::ShowErrs();
+    // TODO
+    // refactor
+    err_code = ExceptionContainer::ShowErrs();
 
-    return ret;
+    return err_code;
 }
 
 /**
@@ -60,7 +65,13 @@ void Compresser::Init(const std::string &src_file, const std::string &dst) {
     }
 
     // 打开dst_file
-    dst_file_ = dst;
+    // TODO 
+    // refactor
+    if (IsEnd()){
+        dst_file_ = dst+"/"+Utils::ReNameBase(src_file, "cmp");
+    } else{
+        dst_file_ = "/tmp/"+Utils::ReNameBase(src_file, "cmp");
+    }
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw new CompresseException("", "open failed on " + dst_file_);
@@ -236,4 +247,8 @@ void Compresser::Clear() {
     if(-1 == close(dst_fd_)) {
         throw new CompresseException("", "failed to close dst_fd");
     }
+
+    // TODO
+    // refactor
+    remove(src_file_.c_str());
 }

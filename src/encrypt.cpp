@@ -6,12 +6,16 @@ using std::string;
 using std::vector;
 
 int Encryptor::Handle(const std::string &src, const std::string &dst) {
+    int err_code = 0;
     try
     {
         Init(src, dst);
         GenerateDigest();
         Encrypt();
         Clear();
+        // TODO
+        // refactor
+        err_code = BaseHandler::Handle(dst_file_, dst);
     }
     catch(BaseException *err)
     {
@@ -20,9 +24,9 @@ int Encryptor::Handle(const std::string &src, const std::string &dst) {
     
     // TODO
     // Exception handle
-    int ret = ExceptionContainer::ShowErrs();
+    err_code |= ExceptionContainer::ShowErrs();
 
-    return ret;
+    return err_code;
 }
 
 void Encryptor::Init(const std::string &src, const std::string &dst) {
@@ -47,7 +51,13 @@ void Encryptor::Init(const std::string &src, const std::string &dst) {
     }
 
     // 打开dst_file
-    dst_file_ = dst;
+    // TODO
+    // refactor
+    if (IsEnd()){
+        dst_file_ = dst+"/"+Utils::ReNameBase(src, "enc");
+    } else{
+        dst_file_ = "/tmp/"+Utils::ReNameBase(src, "enc");
+    }
     dst_fd_ = open(dst_file_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if(-1 == dst_fd_) {
         throw new EncryptException("", "failed to open dst file");
@@ -116,4 +126,7 @@ void Encryptor::Clear() {
     if(-1 == close(dst_fd_)) {
         throw new EncryptException("", "failed to close dst_fd");
     }
+    // TODO
+    // refactor
+    remove(src_file_.c_str());
 }

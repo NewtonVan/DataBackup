@@ -41,6 +41,7 @@ public:
         ) {
             string src = backend->js_parser_.getSrc();
             string dst = backend->abs_path_ + backend->js_parser_.getDst();
+
             // 1、读取字节
             unsigned char flag = 0;
             int fd_src = open(src.c_str(), O_RDONLY);
@@ -191,78 +192,52 @@ public:
         } else {
             unsigned char flag = 0;
             string the_dst{""};
+            string src = backend->js_parser_.getSrc();
+            string dst = backend->abs_path_+backend->js_parser_.getDst();
+            backend->RecurMkdir(dst);
             if ("pack" == backend->js_parser_.getMethod()){
                 flag= Utils::SetBit(flag, PACK_INDEX, 1);
 
-                string pk_src = backend->js_parser_.getSrc();
-                string dst_dir = backend->abs_path_+backend->js_parser_.getDst();
-                backend->RecurMkdir(dst_dir);
-                string pk_dst = dst_dir + '/' + Utils::BaseName(pk_src)+".pak";
                 Packer *packer = new Packer;
-                err_code = packer->Handle(pk_src, pk_dst);
+
+                err_code = packer->Handle(src, dst);
                 delete packer;
-                the_dst = pk_dst;
+                the_dst = dst+'/'+Utils::BaseName(src)+".pak";
 
                 backend->js_parser_.Encode(err_code, dir_entries);
             } else if ("compress" == backend->js_parser_.getMethod()){
                 flag = Utils::SetBit(flag, PACK_INDEX, 1);
                 flag = Utils::SetBit(flag, CMP_INDEX, 1);
 
-                // pack to tmp
-                string pk_src = backend->js_parser_.getSrc();
-                string pk_dst = "/tmp/"+ Utils::BaseName(pk_src) +".pak";
                 Packer *packer = new Packer;
-                err_code = packer->Handle(pk_src, pk_dst);
-                delete packer;
-
-                // cmp to target
-                string cmp_src = pk_dst;
-                string dst_dir = backend->abs_path_+backend->js_parser_.getDst();
-                backend->RecurMkdir(dst_dir);
-                string cmp_dst = dst_dir + '/' + Utils::BaseName(pk_src) +".cmp";
                 Compresser *compresser = new Compresser;
-                err_code |= compresser->Handle(cmp_src, cmp_dst);
-                delete compresser;
-                the_dst = cmp_dst;
+                packer->SetNext(compresser);
 
-                // remove tmp files
-                remove(pk_dst.c_str());
+                err_code = packer->Handle(src, dst);
+                delete packer;
+                delete compresser;
+                the_dst = dst+'/'+Utils::BaseName(src)+".cmp";
 
                 backend->js_parser_.Encode(err_code, dir_entries);
             } else if ("encrypt" == backend->js_parser_.getMethod()){
                 flag = Utils::SetBit(flag, PACK_INDEX, 1);
                 flag = Utils::SetBit(flag, CMP_INDEX, 1);
                 flag = Utils::SetBit(flag, ENC_INDEX, 1);
-                // pack to tmp
-                string pk_src = backend->js_parser_.getSrc();
-                string pk_dst = "/tmp/"+ Utils::BaseName(pk_src) +".pak";
+
                 Packer *packer = new Packer;
-                err_code = packer->Handle(pk_src, pk_dst);
-                delete packer;
-
-                // cmp to tmp
-                string cmp_src = pk_dst;
-                string cmp_dst = "/tmp/" + Utils::BaseName(pk_src) +".cmp";
                 Compresser *compresser = new Compresser;
-                err_code |= compresser->Handle(cmp_src, cmp_dst);
-                delete compresser;
-
-                // encrypt to target
-                string enc_src = cmp_dst;
-                string dst_dir = backend->abs_path_+backend->js_parser_.getDst();
-                backend->RecurMkdir(dst_dir);
-                string enc_dst =  dst_dir + '/' + Utils::BaseName(pk_src) +".enc";
                 Encryptor *encryptor = new Encryptor;
-                // Todo
+                packer->SetNext(compresser);
+                compresser->SetNext(encryptor);
                 encryptor->SetPassword(backend->js_parser_.getKey());
-                err_code |= encryptor->Handle(enc_src, enc_dst);
+
+                err_code = packer->Handle(src, dst);
+    
+                delete packer;
+                delete compresser;
                 delete encryptor;
-                the_dst = enc_dst;
-                
-                // remove tmp files
-                remove(pk_dst.c_str());
-                remove(cmp_dst.c_str());
-                
+                the_dst = dst+'/'+Utils::BaseName(src)+".enc";
+               
                 backend->js_parser_.Encode(err_code, dir_entries);
             }
             if(!the_dst.empty()) {
