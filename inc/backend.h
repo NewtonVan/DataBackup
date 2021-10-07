@@ -26,30 +26,7 @@ using std::endl;
 
 class BackEnd{
 public:
-    static void Handle(websocketpp::connection_hdl hdl, server::message_ptr msg)
-    {
-        BackEnd *backend = new BackEnd(string("/DataBackup/DataBackup/test/target/"));
-        backend->js_parser_.Decode(msg->get_payload());
-
-        if (
-            "decrypt" == backend->js_parser_.getMethod() || 
-            "uncompress" == backend->js_parser_.getMethod() || 
-            "unpack" == backend->js_parser_.getMethod()
-        ) {
-            backend->HandleDecode();
-        } else if ("copy" == backend->js_parser_.getMethod()){
-            backend->HandleCopy();
-        } else if ("getList" == backend->js_parser_.getMethod()){
-            backend->HandleGetList();
-        } else if ("getPWD"==backend->js_parser_.getMethod()){
-            backend->HandleGetPWD();
-        } else {
-            backend->HandleEncode();
-        }
-
-        server &s = MServer::GetInstance().GetEP();
-        s.send(hdl, backend->js_parser_.getJsonString(), msg->get_opcode());
-    }
+    static void Handle(websocketpp::connection_hdl hdl, server::message_ptr msg);
     void Run();
     void RecurMkdir(const string &dst);
     BackEnd(const string &abs_cur_path);

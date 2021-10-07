@@ -1,5 +1,38 @@
 #include "backend.h"
 
+void BackEnd::Handle(websocketpp::connection_hdl hdl, server::message_ptr msg)
+{
+    char cwdbuf[PATH_MAX + 3];
+    if(NULL==getcwd(cwdbuf, PATH_MAX)) {
+        // TODO
+    }
+    string my_cwd(cwdbuf);
+    if('/'!=my_cwd.back()) {
+        my_cwd.push_back('/');
+    }
+    BackEnd *backend = new BackEnd(my_cwd);
+    backend->js_parser_.Decode(msg->get_payload());
+
+    if (
+        "decrypt" == backend->js_parser_.getMethod() || 
+        "uncompress" == backend->js_parser_.getMethod() || 
+        "unpack" == backend->js_parser_.getMethod()
+    ) {
+        backend->HandleDecode();
+    } else if ("copy" == backend->js_parser_.getMethod()){
+        backend->HandleCopy();
+    } else if ("getList" == backend->js_parser_.getMethod()){
+        backend->HandleGetList();
+    } else if ("getPWD"==backend->js_parser_.getMethod()){
+        backend->HandleGetPWD();
+    } else {
+        backend->HandleEncode();
+    }
+
+    server &s = MServer::GetInstance().GetEP();
+    s.send(hdl, backend->js_parser_.getJsonString(), msg->get_opcode());
+}
+
 BackEnd::BackEnd(const string &abs_cur_path)
     : err_code_(0), abs_path_(abs_cur_path)
 {
@@ -56,7 +89,7 @@ void BackEnd::HandleEncode()
     // TODO
     // replace if else with switch case
     // replace the_dst with final_dst_
-    switch (js_parser_.getMethod()){
+    switch (js_parser_.getMethod()[0]){
         case 'p' :
             flag= Utils::SetBit(flag, PACK_INDEX, 1);
             HandlePack();
