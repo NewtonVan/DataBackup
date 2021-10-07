@@ -3,14 +3,14 @@
 void BackEnd::Handle(websocketpp::connection_hdl hdl, server::message_ptr msg)
 {
     char cwdbuf[PATH_MAX + 3];
-    if(NULL==getcwd(cwdbuf, PATH_MAX)) {
+    if(NULL == getcwd(cwdbuf, PATH_MAX)) {
         // TODO
     }
-    string my_cwd(cwdbuf);
-    if('/'!=my_cwd.back()) {
-        my_cwd.push_back('/');
-    }
-    BackEnd *backend = new BackEnd(my_cwd);
+    // TODO
+    // need to test the correctness of RegPath
+    Utils::RegPath(cwdbuf);
+
+    BackEnd *backend = new BackEnd(string(cwdbuf));
     backend->js_parser_.Decode(msg->get_payload());
 
     if (
@@ -38,46 +38,6 @@ BackEnd::BackEnd(const string &abs_cur_path)
 {
 
 }
-void BackEnd::RecurMkdir(const string &dst)
-{
-    size_t local_offset = 0, global_offset = 0;
-    // wired about string::iterator and string::_cxx11::iterator
-    // string::iterator iter = dst.begin()+1;
-    auto iter = dst.begin()+1;
-    string token;
-
-    while (dst.end() != iter){
-        local_offset = (size_t)(find(iter, dst.end(), '/')-iter);
-        if (0 == local_offset){
-            throw new UnPackException(dst, "Wrong format destination");
-        }
-        ++local_offset;
-        iter += local_offset;
-        global_offset += local_offset;
-        token = dst.substr(0, global_offset);
-
-        // TODO
-        // only for test
-        // cout<<token<<endl;
-
-        if (0 == access(token.c_str(), F_OK)){
-            struct stat st_buf;
-            stat(token.c_str(), &st_buf);
-            if (!S_ISDIR(st_buf.st_mode)){
-                throw new UnPackException(dst, "Wrong format destination");
-            }
-        } else{
-            if (-1 == mkdir(token.c_str(), 00775)){
-                throw new UnPackException(dst, "Fail to create directory");
-            }
-        }
-
-
-        if (dst.length() <= global_offset){
-            break;
-        }
-    }
-}
 
 void BackEnd::HandleEncode()
 {
@@ -85,10 +45,7 @@ void BackEnd::HandleEncode()
     final_dst_ = "";
     src_ = js_parser_.getSrc();
     dst_ = abs_path_+js_parser_.getDst();
-    RecurMkdir(dst_);
-    // TODO
-    // replace if else with switch case
-    // replace the_dst with final_dst_
+    Utils::RecurMkdir(dst_);
     switch (js_parser_.getMethod()[0]){
         case 'p' :
             flag= Utils::SetBit(flag, PACK_INDEX, 1);
@@ -164,16 +121,6 @@ void BackEnd::HandleEncrypt()
     delete compresser;
     delete encryptor;
     final_dst_ = dst_+'/'+Utils::BaseName(src_)+".enc";
-}
-
-string BackEnd::getFinalDst()
-{
-    return final_dst_;
-}
-
-void BackEnd::setFinalDst(string final_dst)
-{
-    final_dst_ = final_dst;
 }
 
 void BackEnd::HandleGetList()

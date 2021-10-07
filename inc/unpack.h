@@ -38,10 +38,7 @@ private:
     void UnPackSLNK();
     void Init(const std::string &src, const std::string &dst);
     void Clear(const std::string &src);
-    // TODO
-    // It's proper depart if from unpacker and use it as a common tools
-    void RecurMkdir(const std::string &dst);
-
+private:
     std::string abs_parent_path_;
     std::string dst_file_;
     int fd_backup_;

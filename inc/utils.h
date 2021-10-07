@@ -11,14 +11,16 @@
 
 #define CP_BLOCK_SIZE 512
 
+using std::string;
+
 class CopyException : public BaseException{
 public:
-    CopyException(const std::string &file_nm, const std::string &msg)
+    CopyException(const string &file_nm, const string &msg)
         : BaseException(file_nm, msg)
     {
 
     }
-    std::string what()
+    string what()
     {
         return "Copy Exception : "+BaseException::what();
     }
@@ -26,11 +28,13 @@ public:
 
 class Utils {
 public:
-    static const std::string BaseName(const std::string &file_path);
-    static const std::string ReNameBase(const std::string &file_path, const std::string &surfix);
+    static const string BaseName(const string &file_path);
+    static const string ReNameBase(const string &file_path, const string &surfix);
     static unsigned char SetBit(unsigned char uc, int bit_index, int set_bit);
     static int GetBit(unsigned char uc, int bit_index);
     static void Copy(Header &h, int fd_src, int fd_dst, int padding_on);
+    static void RegPath(char *const path);
+    static void RecurMkdir(const string &dst);
 };
 
 #endif

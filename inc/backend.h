@@ -27,11 +27,7 @@ using std::endl;
 class BackEnd{
 public:
     static void Handle(websocketpp::connection_hdl hdl, server::message_ptr msg);
-    void Run();
-    void RecurMkdir(const string &dst);
     BackEnd(const string &abs_cur_path);
-    string getFinalDst();
-    void setFinalDst(string final_dst);
 private:
     void HandlePack();
     void HandleEncrypt();
