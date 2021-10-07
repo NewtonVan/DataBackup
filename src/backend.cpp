@@ -1,7 +1,7 @@
 #include "backend.h"
 
 BackEnd::BackEnd(const string &abs_cur_path)
-    : abs_path_(abs_cur_path)
+    : err_code_(0), abs_path_(abs_cur_path)
 {
 
 }
@@ -76,7 +76,7 @@ void BackEnd::HandleEncode()
             err_code_ = -1;
     }
 
-    js_parser_.Encode(err_code_, dir_entries);
+    js_parser_.Encode(err_code_, dir_entries_);
 
     if(!final_dst_.empty()) {
         // add end-byte
@@ -157,7 +157,7 @@ void BackEnd::HandleGetList()
         // TODO
         // throw PackException("", "opendir failed on " + src_file);
         err_code_ = 1;
-        js_parser_.Encode(err_code_, dir_entries);
+        js_parser_.Encode(err_code_, dir_entries_);
         return;
     }
     for(;;) {
@@ -189,7 +189,7 @@ void BackEnd::HandleGetList()
         }
         de.m_inode = st_buf.st_ino;
         de.m_size = st_buf.st_size;
-        dir_entries.push_back(de);
+        dir_entries_.push_back(de);
     }
     if(0 != errno) {
         // TODO
@@ -201,7 +201,7 @@ void BackEnd::HandleGetList()
         // throw PackException("", "closedir failed on " + src_file);
     }
 
-    js_parser_.Encode(err_code_, dir_entries);
+    js_parser_.Encode(err_code_, dir_entries_);
 }
 
 void BackEnd::HandleGetPWD()
@@ -227,7 +227,7 @@ void BackEnd::HandleCopy()
     // error handle
     remove(pk_dst.c_str());
 
-    js_parser_.Encode(err_code_, dir_entries);
+    js_parser_.Encode(err_code_, dir_entries_);
 }
 
 void BackEnd::HandleDecode()
@@ -291,7 +291,7 @@ void BackEnd::HandleDecode()
         delete unpacker;
     }
     
-    js_parser_.Encode(err_code_, dir_entries);
+    js_parser_.Encode(err_code_, dir_entries_);
 
     // 4、文件还原
     fd_src = open(src_.c_str(), O_WRONLY | O_APPEND);

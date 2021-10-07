@@ -31,8 +31,6 @@ public:
         BackEnd *backend = new BackEnd(string("/DataBackup/DataBackup/test/target/"));
         backend->js_parser_.Decode(msg->get_payload());
 
-        vector<DirEntry> dir_entries;
-        backend->err_code_ = 0;
         if (
             "decrypt" == backend->js_parser_.getMethod() || 
             "uncompress" == backend->js_parser_.getMethod() || 
@@ -74,6 +72,7 @@ private:
     string final_dst_;
     string src_;
     string dst_;
+    vector<DirEntry> dir_entries_;
 };
 
 #endif
