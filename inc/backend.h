@@ -32,241 +32,48 @@ public:
         backend->js_parser_.Decode(msg->get_payload());
 
         vector<DirEntry> dir_entries;
-        int err_code = 0;
-        // TODO
+        backend->err_code_ = 0;
         if (
             "decrypt" == backend->js_parser_.getMethod() || 
             "uncompress" == backend->js_parser_.getMethod() || 
             "unpack" == backend->js_parser_.getMethod()
         ) {
-            string src = backend->js_parser_.getSrc();
-            string dst = backend->abs_path_ + backend->js_parser_.getDst();
-
-            // 1、读取字节
-            unsigned char flag = 0;
-            int fd_src = open(src.c_str(), O_RDONLY);
-            if(-1 == fd_src) {
-                // Todo
-            }
-            if(-1 == lseek(fd_src, -1, SEEK_END)) {
-                // Todo
-            }
-            if(sizeof(flag)!=read(fd_src, &flag, sizeof(flag)))
-            if(-1 == close(fd_src)) {
-                // Todo
-            }
-
-            // 2、文件截断
-            struct stat st_buf;
-            if(-1 == stat(src.c_str(), &st_buf)) {
-                // Todo
-            }
-            if(-1 == truncate(src.c_str(), st_buf.st_size-1)) {
-                // TOdo
-            }
-
-            // 3、unpack
-            string t_src = src;
-            string t_dst = "";
-            if (Utils::GetBit(flag, ENC_INDEX)){
-                Decryptor *decryptor = new Decryptor;
-                // TODO 重要
-                decryptor->SetPassword(backend->js_parser_.getKey());
-                t_dst = "/tmp/"+Utils::BaseName(t_src)+".dec";
-                err_code |= decryptor->Handle(t_src, t_dst);
-                t_src = t_dst;
-                delete decryptor;
-            }
-            if (!err_code && Utils::GetBit(flag, CMP_INDEX)){
-                Decompresser *decomp = new Decompresser;
-                t_dst = "/tmp/"+Utils::BaseName(t_src)+".dcmp";
-                err_code |= decomp->Handle(t_src, t_dst);
-                if (t_src != src){
-                    // Todo
-                    remove(t_src.c_str());
-                }
-                t_src = t_dst;
-                delete decomp;
-            }
-            if (!err_code){
-                UnPacker *unpacker = new UnPacker;
-                err_code |= unpacker->Handle(t_src, dst);
-                if (t_src != src){
-                    // TODO
-                    remove(t_src.c_str());
-                }
-                delete unpacker;
-            }
-          
-            backend->js_parser_.Encode(err_code, dir_entries);
-
-            // 4、文件还原
-            fd_src = open(src.c_str(), O_WRONLY | O_APPEND);
-            if(-1 == fd_src) {
-                // Todo
-            }
-            if(sizeof(flag) != write(fd_src, &flag, sizeof(flag))) {
-                // Todo
-            }
-            if(-1 == close(fd_src)) {
-                // Todo
-            }
+            backend->HandleDecode();
         } else if ("copy" == backend->js_parser_.getMethod()){
-            Packer *packer = new Packer;
-            string pk_src = backend->js_parser_.getSrc();
-            string pk_dst = "/tmp";
-            err_code = packer->Handle(pk_src, pk_dst);
-            pk_dst += "/"+Utils::BaseName(pk_src)+".pak";
-            delete packer;
-
-            UnPacker *unpacker = new UnPacker;
-            string cp_dst = backend->abs_path_+backend->js_parser_.getDst();
-            err_code |= unpacker->Handle(pk_dst, cp_dst);
-            delete unpacker;
-
-            // TODO
-            // error handle
-            remove(pk_dst.c_str());
-
-            backend->js_parser_.Encode(err_code, dir_entries);
+            backend->HandleCopy();
         } else if ("getList" == backend->js_parser_.getMethod()){
-            backend->abs_path_ = backend->js_parser_.getPath();
-            if ('/' != backend->abs_path_.back()){
-                backend->abs_path_.push_back('/');
-            }
-            // cout << backend->abs_path_ << endl;
-            DIR *dirp;
-            dirent *dp;
-            dirp = opendir(backend->abs_path_.c_str());
-            if(NULL == dirp) {
-                // TODO
-                // throw PackException("", "opendir failed on " + src_file);
-                err_code = 1;
-                backend->js_parser_.Encode(err_code, dir_entries);
-                goto RESPONSE;
-            }
-            for(;;) {
-                errno = 0;
-                dp = readdir(dirp);
-                if(dp==NULL) {
-                    break;
-                }
-                string d_name(dp->d_name);
-                if(d_name=="." || d_name=="..") {
-                    continue;
-                }
-                struct stat st_buf;
-                if(-1 == lstat((backend->abs_path_ + dp->d_name).c_str(), &st_buf)) {
-                    // TODO
-                }
-                DirEntry de;
-                de.m_filename = d_name;
-                if(S_ISDIR(st_buf.st_mode)) {
-                    de.m_filetype =  "dir";
-                } else if(S_ISREG(st_buf.st_mode)) {
-                    de.m_filetype =  "reg";
-                } else if(S_ISFIFO(st_buf.st_mode)) {
-                    de.m_filetype =  "fifo";
-                } else if(S_ISLNK(st_buf.st_mode)) {
-                    de.m_filetype =  "symlink";
-                } else {
-                    continue;
-                }
-                de.m_inode = st_buf.st_ino;
-                de.m_size = st_buf.st_size;
-                dir_entries.push_back(de);
-            }
-            if(0 != errno) {
-                // TODO
-                // throw PackException("", "readdir failed on " + src_file);
-            }
-            // close dir fd
-            if(-1 == closedir(dirp)) {
-                // TODO
-                // throw PackException("", "closedir failed on " + src_file);
-            }
-
-            backend->js_parser_.Encode(err_code, dir_entries);
+            backend->HandleGetList();
         } else if ("getPWD"==backend->js_parser_.getMethod()){
-            backend->js_parser_.Encode(err_code, backend->abs_path_.substr(0, backend->abs_path_.length()-1));
-            // cout<<backend->js_parser_.getJsonString()<<endl;
+            backend->HandleGetPWD();
         } else {
-            unsigned char flag = 0;
-            string the_dst{""};
-            string src = backend->js_parser_.getSrc();
-            string dst = backend->abs_path_+backend->js_parser_.getDst();
-            backend->RecurMkdir(dst);
-            if ("pack" == backend->js_parser_.getMethod()){
-                flag= Utils::SetBit(flag, PACK_INDEX, 1);
-
-                Packer *packer = new Packer;
-
-                err_code = packer->Handle(src, dst);
-                delete packer;
-                the_dst = dst+'/'+Utils::BaseName(src)+".pak";
-
-                backend->js_parser_.Encode(err_code, dir_entries);
-            } else if ("compress" == backend->js_parser_.getMethod()){
-                flag = Utils::SetBit(flag, PACK_INDEX, 1);
-                flag = Utils::SetBit(flag, CMP_INDEX, 1);
-
-                Packer *packer = new Packer;
-                Compresser *compresser = new Compresser;
-                packer->SetNext(compresser);
-
-                err_code = packer->Handle(src, dst);
-                delete packer;
-                delete compresser;
-                the_dst = dst+'/'+Utils::BaseName(src)+".cmp";
-
-                backend->js_parser_.Encode(err_code, dir_entries);
-            } else if ("encrypt" == backend->js_parser_.getMethod()){
-                flag = Utils::SetBit(flag, PACK_INDEX, 1);
-                flag = Utils::SetBit(flag, CMP_INDEX, 1);
-                flag = Utils::SetBit(flag, ENC_INDEX, 1);
-
-                Packer *packer = new Packer;
-                Compresser *compresser = new Compresser;
-                Encryptor *encryptor = new Encryptor;
-                packer->SetNext(compresser);
-                compresser->SetNext(encryptor);
-                encryptor->SetPassword(backend->js_parser_.getKey());
-
-                err_code = packer->Handle(src, dst);
-    
-                delete packer;
-                delete compresser;
-                delete encryptor;
-                the_dst = dst+'/'+Utils::BaseName(src)+".enc";
-               
-                backend->js_parser_.Encode(err_code, dir_entries);
-            }
-            if(!the_dst.empty()) {
-                // add end-byte
-                struct stat st_buf;
-                lstat(the_dst.c_str(), &st_buf);
-                int fd_dst = open(the_dst.c_str(), O_WRONLY | O_APPEND);
-                if(-1 == fd_dst) {
-                    // Todo
-                }
-                if(sizeof(flag) != write(fd_dst, &flag, sizeof(flag))) {
-                    // Todo
-                }
-                if(-1 == close(fd_dst)) {
-                    // Todo
-                }
-            }
+            backend->HandleEncode();
         }
 
-RESPONSE: server &s = MServer::GetInstance().GetEP();
+        server &s = MServer::GetInstance().GetEP();
         s.send(hdl, backend->js_parser_.getJsonString(), msg->get_opcode());
     }
     void Run();
     void RecurMkdir(const string &dst);
     BackEnd(const string &abs_cur_path);
+    string getFinalDst();
+    void setFinalDst(string final_dst);
 private:
+    void HandlePack();
+    void HandleEncrypt();
+    void HandleCompress();
+    void HandleEncode();
+    void HandleGetList();
+    void HandleGetPWD();
+    void HandleCopy();
+    void HandleDecode();
+
+private:
+    int err_code_;
     JsonParser js_parser_;
     string abs_path_;   // abs_path_ end with '/'
+    string final_dst_;
+    string src_;
+    string dst_;
 };
 
 #endif

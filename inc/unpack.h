@@ -10,6 +10,7 @@
 #include "header.h"
 #include "handler.h"
 #include "exception_interface.h"
+#include "utils.h"
 
 class UnPackException : public BaseException{
 public:

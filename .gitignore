@@ -58,3 +58,6 @@ env_confg/*
 
 # Front-end
 front_end/*
+
+# docs
+docs/*
