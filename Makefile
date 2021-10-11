@@ -3,7 +3,7 @@ CXX_INCLUDE_FLAGS = -Iinc
 LIBS = -lboost_system -ljsoncpp -lpthread -lcrypto
 CXXFLAGS = -std=c++11 $(CXX_INCLUDE_FLAGS) -w
 
-CPP_SRC_FILES = $(shell find . -path "./test" -name "*.cpp")
+CPP_SRC_FILES = $(shell find .  -name "*.cpp" -not -path "./test/*")
 CPP_OBJ_FILES = $(patsubst %.cpp, %.o, $(CPP_SRC_FILES))
 CPP_DPT_FILES = $(patsubst %.cpp, %.d, $(CPP_SRC_FILES))
 
@@ -27,8 +27,13 @@ $(DST) : $(CPP_OBJ_FILES)
 clean :
 	rm -f $(DST)
 	rm -f $(CPP_OBJ_FILES) $(CPP_DPT_FILES)
-	rm -f $(shell find . -name "*.dtmp")
+	rm -f $(shell find . -name "*.dtmp")	
 
 run :
 	make
-	$(DST)
+	$(DST) test 2>> errlog 
+	
+runAll :
+	make
+	$(DST) test 2>> errlog &
+	cd front_end && npm start
