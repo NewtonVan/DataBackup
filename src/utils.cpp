@@ -81,7 +81,7 @@ void Utils::RecurMkdir(const string &dst)
     while (dst.end() != iter){
         local_offset = (size_t)(find(iter, dst.end(), '/')-iter);
         if (0 == local_offset){
-            throw new UnPackException(dst, "Wrong format destination");
+            throw new CopyException(dst, "Wrong format destination");
         }
         ++local_offset;
         iter += local_offset;
@@ -96,11 +96,11 @@ void Utils::RecurMkdir(const string &dst)
             struct stat st_buf;
             stat(token.c_str(), &st_buf);
             if (!S_ISDIR(st_buf.st_mode)){
-                throw new UnPackException(dst, "Wrong format destination");
+                throw new CopyException(dst, "Wrong format destination");
             }
         } else{
             if (-1 == mkdir(token.c_str(), 00775)){
-                throw new UnPackException(dst, "Fail to create directory");
+                throw new CopyException(dst, "Fail to create directory");
             }
         }
 
