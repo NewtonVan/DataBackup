@@ -52,6 +52,7 @@
 env_confg/*
 !env_confg/Dockerfile
 !env_confg/sources.list
+!env_confg/websocketpp
 
 # docs
 docs/*
