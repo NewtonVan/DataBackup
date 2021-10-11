@@ -48,16 +48,10 @@
 # Unrelated Files
 *.dtmp
 
-# Test Files
-test/
-
 # confg files
 env_confg/*
 !env_confg/Dockerfile
 !env_confg/sources.list
-
-# Front-end
-front_end/*
 
 # docs
 docs/*
