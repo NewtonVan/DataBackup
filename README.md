@@ -7,7 +7,7 @@
 docker build -t dbk .
 
 # 注意配置数据卷以支持项目映射
-docker run -it -v <本项目绝对路径>:/DataBackup -p 127.0.0.1:8081:8081 -p 127.0.0.1:8082:8082 dbk
+docker run -it -v <本项目绝对路径>:/DataBackup -p 127.0.0.1:8081:8081 -p 127.0.0.1:8082:8082 dbk /bin/bash
 ```
 
 ## 2 代码运行
